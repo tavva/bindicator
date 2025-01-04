@@ -1,0 +1,2 @@
+default_fqbn: esp32:esp32:esp32_family
+default_port: /dev/cu.usbmodem2101
