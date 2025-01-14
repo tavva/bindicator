@@ -196,6 +196,6 @@ void calendarTask(void* parameter) {
             Serial.println("WiFi not connected, skipping calendar check");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(300000));
+        vTaskDelay(pdMS_TO_TICKS(3600000));
     }
 }
