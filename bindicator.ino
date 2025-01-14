@@ -10,6 +10,7 @@
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
 DisplayHandler display;
+bool hasRecycling, hasRubbish;
 
 void setup() {
     Serial.begin(115200);
@@ -44,7 +45,6 @@ void loop() {
     static unsigned long lastCheck = 0;
     if (millis() - lastCheck >= 3600000) {
         Serial.println("Checking for bin events");
-        bool hasRecycling, hasRubbish;
         if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
             updateDisplay(hasRecycling, hasRubbish);
         }
