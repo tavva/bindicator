@@ -3,34 +3,44 @@
 #include "oauth_handler.h"
 #include "calendar_handler.h"
 #include "secrets.h"
+#include "display_handler.h"
 
 #define PIN_NEOPIXEL 14
 
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
-
+DisplayHandler display;
 bool hasRecycling, hasRubbish;
 
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
 
-    neopixelWrite(PIN_NEOPIXEL, RGB_BRIGHTNESS, 0, 70);
+    display.begin();
+    display.showNeither();
+
     connectToWiFi();
     setupTime();
-
-    neopixelWrite(PIN_NEOPIXEL, RGB_BRIGHTNESS, 0, 40);
+    Serial.println("Setup complete");
 }
 
 void loop() {
-    // Check calendar every hour (10 seconds for debugging)
     static unsigned long lastCheck = 0;
-    // if (millis() - lastCheck >= 3600000) {
-    if (millis() - lastCheck >= 10000) {
+    // if (millis() - lastCheck >= 3600000) { // Check every hour
+    if (millis() - lastCheck >= 15000) { // Check every 15 seconds
         if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-            Serial.println("Recycling: " + String(hasRecycling));
-            Serial.println("Rubbish: " + String(hasRubbish));
+            updateDisplay(hasRecycling, hasRubbish);
         }
         lastCheck = millis();
+    }
+}
+
+void updateDisplay(bool hasRecycling, bool hasRubbish) {
+    if (hasRecycling) {
+        display.showRecycling();
+    } else if (hasRubbish) {
+        display.showRubbish();
+    } else {
+        display.showNeither();
     }
 }
