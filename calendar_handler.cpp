@@ -8,6 +8,8 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     String today = getISODate();
     if (today.isEmpty()) {
         Serial.println("Failed to get current date");
+        Command cmd = CMD_SHOW_ERROR_OTHER;
+        xQueueSend(commandQueue, &cmd, 0);
         return false;
     }
 
@@ -18,6 +20,8 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
 
     if (!oauth.getValidToken(access_token)) {
         Serial.println("Failed to get valid token");
+        Command cmd = CMD_SHOW_ERROR_API;
+        xQueueSend(commandQueue, &cmd, 0);
         return false;
     }
 
@@ -33,40 +37,41 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     http.addHeader("Authorization", "Bearer " + access_token);
 
     int httpResponseCode = http.GET();
-    if (httpResponseCode == 200) {
-        String payload = http.getString();
-
-        Serial.println("Calendar API Response:");
-        Serial.println(payload);
-
-        StaticJsonDocument<2048> doc;
-        DeserializationError error = deserializeJson(doc, payload);
-        if (error) {
-            Serial.print("deserializeJson() failed: ");
-            Serial.println(error.c_str());
-            http.end();
-            return false;
-        }
-
-        hasRecycling = false;
-        hasRubbish = false;
-
-        JsonArray items = doc["items"];
-        for (JsonVariant item : items) {
-            String summary = item["summary"].as<String>();
-            Serial.println("Found event: " + summary);
-            if (summary.indexOf("(recycling)") >= 0) hasRecycling = true;
-            if (summary.indexOf("(rubbish)") >= 0) hasRubbish = true;
-        }
-
+    if (httpResponseCode != 200) {
+        Serial.println("Calendar API Error: " + String(httpResponseCode));
+        Command cmd = CMD_SHOW_ERROR_API;
+        xQueueSend(commandQueue, &cmd, 0);
         http.end();
-        return true;
+        return false;
     }
 
-    Serial.println("Calendar API Error: " + String(httpResponseCode));
-    Serial.println(http.getString());
+    String payload = http.getString();
+
+    Serial.println("Calendar API Response:");
+    Serial.println(payload);
+
+    StaticJsonDocument<2048> doc;
+    DeserializationError error = deserializeJson(doc, payload);
+    if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        http.end();
+        return false;
+    }
+
+    hasRecycling = false;
+    hasRubbish = false;
+
+    JsonArray items = doc["items"];
+    for (JsonVariant item : items) {
+        String summary = item["summary"].as<String>();
+        Serial.println("Found event: " + summary);
+        if (summary.indexOf("(recycling)") >= 0) hasRecycling = true;
+        if (summary.indexOf("(rubbish)") >= 0) hasRubbish = true;
+    }
+
     http.end();
-    return false;
+    return true;
 }
 
 String CalendarHandler::urlEncode(const String& str) {

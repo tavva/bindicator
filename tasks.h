@@ -14,7 +14,10 @@ enum Command {
     CMD_SHOW_RECYCLING,
     CMD_SHOW_RUBBISH,
     CMD_SHOW_NEITHER,
-    CMD_SHOW_LOADING
+    CMD_SHOW_LOADING,
+    CMD_SHOW_ERROR_API,
+    CMD_SHOW_ERROR_WIFI,
+    CMD_SHOW_ERROR_OTHER
 };
 
 extern uint8_t Matrix_Data[8][8];

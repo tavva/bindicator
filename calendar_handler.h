@@ -5,6 +5,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "oauth_handler.h"
+#include "tasks.h"
 
 class CalendarHandler {
     public:
