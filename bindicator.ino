@@ -9,16 +9,79 @@
 #include "secrets.h"
 #include "display_handler.h"
 #include "tasks.h"
+#include "setup_server.h"
 
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
 DisplayHandler display;
 bool hasRecycling, hasRubbish;
+SetupServer setupServer;
+bool inSetupMode = false;
+
+void startSetupMode() {
+    Serial.println("Entering setup mode");
+    inSetupMode = true;
+
+    WiFi.softAP("Bindicator Setup", "bindicator123");
+    Serial.println("Access Point Started");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.softAPIP());
+
+    setupServer.begin();
+}
 
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
 
+    if(!SPIFFS.begin(true)) {
+        Serial.println("SPIFFS Mount Failed");
+        return;
+    }
+    Serial.println("SPIFFS Mounted successfully");
+
+    if (!setupServer.isConfigured()) {
+        Serial.println("No configuration found");
+        startSetupMode();
+    } else {
+        Serial.println("Configuration found, starting normal operation");
+
+        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
+        Serial.println("Connecting to WiFi...");
+
+        int attempts = 0;
+        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+            delay(500);
+            Serial.print(".");
+            attempts++;
+        }
+        Serial.println();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("WiFi connected!");
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP());
+            startNormalOperation();
+        } else {
+            Serial.println("Failed to connect to WiFi");
+            startSetupMode();
+        }
+    }
+}
+
+void loop() {
+    if (inSetupMode) {
+        setupServer.handleClient();
+        // Feed the watchdog timer and allow other tasks to run
+        delay(10);
+    } else {
+        // When not in setup mode, delete the loop task
+        // as all our work is handled by FreeRTOS tasks
+        vTaskDelete(NULL);
+    }
+}
+
+void startNormalOperation() {
     display.begin();
     display.matrix.clear();
     display.matrix.setBrightness(50);
@@ -54,8 +117,4 @@ void setup() {
     );
 
     Serial.println("Tasks created");
-}
-
-void loop() {
-    vTaskDelete(NULL);
 }
