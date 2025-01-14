@@ -13,7 +13,8 @@ enum Command {
     CMD_STOP_PULSE,
     CMD_SHOW_RECYCLING,
     CMD_SHOW_RUBBISH,
-    CMD_SHOW_NEITHER
+    CMD_SHOW_NEITHER,
+    CMD_SHOW_LOADING
 };
 
 extern uint8_t Matrix_Data[8][8];

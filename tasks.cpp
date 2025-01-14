@@ -17,9 +17,14 @@ void animationTask(void* parameter) {
 
     Serial.println("Animation task started");
 
+    static bool isLoading = true;
+    static int loadingPos = 0;
+    static int loadingDelay = 0;
+    const int LOADING_SPEED = 4;
+
     while(true) {
         static int x = 0;
-        static uint8_t r = 0, g = 0, b = 30;  // Start with blue (neither)
+        static uint8_t r = 0, g = 0, b = 30;  // Default blue
 
         Command cmd = CMD_NONE;
         if (xQueueReceive(commandQueue, &cmd, 0) == pdTRUE) {
@@ -27,15 +32,22 @@ void animationTask(void* parameter) {
             switch(cmd) {
                 case CMD_SHOW_RECYCLING:
                     Serial.println("Switching to green (recycling)");
-                    r = 0; g = 50; b = 0;  // Green
+                    r = 0; g = 50; b = 0;
+                    isLoading = false;
                     break;
                 case CMD_SHOW_RUBBISH:
                     Serial.println("Switching to brown (rubbish)");
-                    r = 20; g = 40; b = 0;  // Brown
+                    r = 20; g = 40; b = 0;
+                    isLoading = false;
                     break;
                 case CMD_SHOW_NEITHER:
                     Serial.println("Switching to blue (neither)");
-                    r = 0; g = 0; b = 50;   // Blue
+                    r = 0; g = 0; b = 50;
+                    isLoading = false;
+                    break;
+                case CMD_SHOW_LOADING:
+                    Serial.println("Showing loading animation");
+                    isLoading = true;
                     break;
                 default:
                     Serial.printf("Unknown command: %d\n", cmd);
@@ -43,47 +55,69 @@ void animationTask(void* parameter) {
             }
         }
 
-        uint8_t brightness = (x < 32) ? x * 2 : (64 - x) * 2;
-
-        if (x % 32 == 0) {
-            Serial.printf("Frame: %d, Brightness: %d, Color(R,G,B): %d,%d,%d\n",
-                x, brightness, r, g, b);
-        }
-
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                RGB_Data1[row*8+col][0] = (r * brightness) / 64;
-                RGB_Data1[row*8+col][1] = (g * brightness) / 64;
-                RGB_Data1[row*8+col][2] = (b * brightness) / 64;
-            }
-        }
-
         extern DisplayHandler display;
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                if(Matrix_Data[row][col] == 1) {
-                    uint32_t color = display.matrix.Color(
-                        RGB_Data1[row*8+col][0],
-                        RGB_Data1[row*8+col][1],
-                        RGB_Data1[row*8+col][2]
-                    );
-                    display.matrix.setPixelColor(row*8+col, color);
+        display.matrix.clear();
 
-                    // Debug first pixel's color every 32 frames
-                    if (row == 0 && col == 0 && x % 32 == 0) {
-                        Serial.printf("Pixel(0,0) color values: R=%d, G=%d, B=%d\n",
-                            RGB_Data1[0][0],
-                            RGB_Data1[0][1],
-                            RGB_Data1[0][2]
+        if (isLoading) {
+            int pos1_row, pos1_col, pos2_row, pos2_col;
+
+            if (loadingPos < 6) {
+                pos1_row = 1;
+                pos1_col = loadingPos + 1;
+            } else if (loadingPos < 12) {
+                pos1_row = loadingPos - 4;
+                pos1_col = 6;
+            } else if (loadingPos < 18) {
+                pos1_row = 6;
+                pos1_col = 17 - loadingPos;
+            } else {
+                pos1_row = 23 - loadingPos;
+                pos1_col = 1;
+            }
+
+            int oppositePos = (loadingPos + 12) % 24;
+            if (oppositePos < 6) {
+                pos2_row = 1;
+                pos2_col = oppositePos + 1;
+            } else if (oppositePos < 12) {
+                pos2_row = oppositePos - 4;
+                pos2_col = 6;
+            } else if (oppositePos < 18) {
+                pos2_row = 6;
+                pos2_col = 17 - oppositePos;
+            } else {
+                pos2_row = 23 - oppositePos;
+                pos2_col = 1;
+            }
+
+            display.matrix.setPixelColor(pos1_row * 8 + pos1_col, display.matrix.Color(30, 30, 30));
+            display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(30, 30, 30));
+
+            loadingDelay++;
+            if (loadingDelay >= LOADING_SPEED) {
+                loadingDelay = 0;
+                loadingPos = (loadingPos + 1) % 24;
+            }
+        } else {
+            uint8_t brightness = (x < 32) ? x * 2 : (64 - x) * 2;
+
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    if(Matrix_Data[row][col] == 1) {
+                        display.matrix.setPixelColor(row*8+col,
+                            display.matrix.Color(
+                                (r * brightness) / 64,
+                                (g * brightness) / 64,
+                                (b * brightness) / 64
+                            )
                         );
                     }
                 }
             }
+            x = (x + 1) % 64;
         }
 
         display.matrix.show();
-        x = (x + 1) % 64;
-
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
@@ -115,6 +149,10 @@ void calendarTask(void* parameter) {
 
     Serial.println("Calendar task started");
 
+    Command cmd = CMD_SHOW_LOADING;
+    xQueueSend(commandQueue, &cmd, 0);
+
+    // Delay to let WiFi connect
     vTaskDelay(pdMS_TO_TICKS(5000));
 
     struct tm timeinfo;
@@ -136,7 +174,7 @@ void calendarTask(void* parameter) {
 
                 if (hasRecycling && hasRubbish) {
                     Serial.println("Both bins!");
-                    cmd = CMD_SHOW_RECYCLING;  // Priority to recycling
+                    cmd = CMD_SHOW_RECYCLING;
                 } else if (hasRecycling) {
                     Serial.println("Recycling only");
                     cmd = CMD_SHOW_RECYCLING;
