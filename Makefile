@@ -1,6 +1,6 @@
 CLI?=/opt/homebrew/bin/arduino-cli
 PORT?=/dev/cu.usbmodem2101
-BOARD?=esp32:esp32:esp32s3
+BOARD?=esp32:esp32:esp32s3:CDCOnBoot=cdc
 SKETCH=$(shell ls *.ino | head -n 1)
 hr=bash -c 'COLS=`tput cols`;x=1;dots=""; while [ $$x -le $$COLS ]; do dots="$$dots""-"; x=$$(( $$x + 1 )); done; dots=$${dots:0:$$COLS}; echo $$dots;'
 
@@ -24,6 +24,12 @@ upload:
 	@${hr}
 	@${CLI} -v compile --upload -p $(PORT) --fqbn $(BOARD) $(SKETCH)
 
+just-upload:
+	@${hr}
+	@echo Uploading
+	@${hr}
+	@${CLI} upload -p $(PORT) --fqbn $(BOARD) $(SKETCH)
+
 update:
 	@${hr}
 	@echo Updating Arduino platform...
@@ -36,3 +42,9 @@ list:
 	@echo Listing all installed board's FQBN
 	@${hr}
 	@${CLI} board listall
+
+monitor:
+	@${hr}
+	@echo Starting serial monitor...
+	@${hr}
+	@${CLI} monitor -p $(PORT) --fqbn $(BOARD)
