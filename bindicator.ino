@@ -34,14 +34,6 @@ void setup() {
 }
 
 void loop() {
-    static bool firstLoop = true;
-    if (firstLoop) {
-        Serial.println("First loop entry");
-        Serial.flush();
-        firstLoop = false;
-    }
-
-    Serial.println("Loop entry");
     static unsigned long lastCheck = 0;
     if (millis() - lastCheck >= 3600000) {
         Serial.println("Checking for bin events");
