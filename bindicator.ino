@@ -30,6 +30,36 @@ void startSetupMode() {
     setupServer.begin();
 }
 
+bool tryWiFiConnection(int maxAttempts = 3) {
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+        Serial.printf("\nWiFi connection attempt %d of %d\n", attempt, maxAttempts);
+
+        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
+
+        int checks = 0;
+        while (WiFi.status() != WL_CONNECTED && checks < 20) {
+            delay(500);
+            Serial.print(".");
+            checks++;
+        }
+        Serial.println();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("WiFi connected!");
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP());
+            return true;
+        }
+
+        Serial.println("Connection attempt failed");
+        WiFi.disconnect(true);
+        delay(1000);
+    }
+
+    Serial.printf("Failed to connect to WiFi after %d attempts\n", maxAttempts);
+    return false;
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
@@ -46,24 +76,10 @@ void setup() {
     } else {
         Serial.println("Configuration found, starting normal operation");
 
-        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
-        Serial.println("Connecting to WiFi...");
-
-        int attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-            delay(500);
-            Serial.print(".");
-            attempts++;
-        }
-        Serial.println();
-
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("WiFi connected!");
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
+        if (tryWiFiConnection(3)) {
             startNormalOperation();
         } else {
-            Serial.println("Failed to connect to WiFi");
+            Serial.println("Failed to establish WiFi connection");
             startSetupMode();
         }
     }
