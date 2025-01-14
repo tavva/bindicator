@@ -41,22 +41,15 @@ void DisplayHandler::update() {
     if (currentMillis - lastPulseUpdate >= 20) {
         lastPulseUpdate = currentMillis;
 
-        if (pulseIncreasing) {
-            pulseValue += 0.2;
-            if (pulseValue >= MAX_BRIGHTNESS) {
-                pulseValue = MAX_BRIGHTNESS;
-                pulseIncreasing = false;
-            }
-        } else {
-            pulseValue -= 0.2;
-            if (pulseValue <= MIN_BRIGHTNESS) {
-                pulseValue = MIN_BRIGHTNESS;
-                pulseIncreasing = true;
-            }
-        }
+        float t = (float)(millis()) / 2000.0; // total cycle time
+        float sine = sin(t * PI);
+        float normalized = (sine + 1.0) / 2.0;
+
+        pulseValue = MIN_BRIGHTNESS + (normalized * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
 
         matrix.setBrightness(static_cast<uint8_t>(pulseValue));
         fillScreen(currentColor);
+        yield();
     }
 }
 
