@@ -14,6 +14,8 @@ class DisplayHandler {
         void showNeither();
         void update();
 
+        Adafruit_NeoPixel matrix;
+
     private:
         static const uint8_t MATRIX_WIDTH = 8;
         static const uint8_t MATRIX_HEIGHT = 8;
@@ -25,7 +27,6 @@ class DisplayHandler {
         // see: https://www.waveshare.com/wiki/ESP32-S3-Matrix
         static const uint8_t BRIGHTNESS = MAX_BRIGHTNESS;
 
-        Adafruit_NeoPixel matrix;
         void fillScreen(uint32_t color);
 
         uint32_t currentColor;

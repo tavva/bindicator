@@ -10,47 +10,47 @@ DisplayHandler::DisplayHandler(uint8_t pin)
 
 void DisplayHandler::begin() {
     matrix.begin();
-    matrix.setBrightness(MAX_BRIGHTNESS);
+    matrix.setBrightness(BRIGHTNESS);
     matrix.clear();
     matrix.show();
 }
 
 void DisplayHandler::showRecycling() {
     currentColor = matrix.Color(0, 50, 0);  // Green
-    isPulsing = true;
     fillScreen(currentColor);
+    isPulsing = true;
 }
 
 void DisplayHandler::showRubbish() {
-    currentColor = matrix.Color(40, 20, 0);  // Brown
-    isPulsing = true;
+    currentColor = matrix.Color(20, 40, 0);  // Brown
     fillScreen(currentColor);
+    isPulsing = true;
 }
 
 void DisplayHandler::showNeither() {
-    currentColor = matrix.Color(5, 5, 5);  // Faint white
-    isPulsing = false;
-    matrix.setBrightness(MIN_BRIGHTNESS);
+    currentColor = matrix.Color(0, 0, 50);  // Blue
     fillScreen(currentColor);
+    isPulsing = true;
 }
 
 void DisplayHandler::update() {
     if (!isPulsing) return;
 
     unsigned long currentMillis = millis();
-    if (currentMillis - lastPulseUpdate >= 20) {
-        lastPulseUpdate = currentMillis;
+    if (currentMillis - lastPulseUpdate < 30) return;
 
-        float t = (float)(millis()) / 2000.0; // total cycle time
-        float sine = sin(t * PI);
-        float normalized = (sine + 1.0) / 2.0;
+    lastPulseUpdate = currentMillis;
 
-        pulseValue = MIN_BRIGHTNESS + (normalized * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
+    float t = (float)(currentMillis) / 40000.0;
+    float sine = sin(2 * PI * t);
+    float normalized = (sine + 1.0) / 2.0;
 
-        matrix.setBrightness(static_cast<uint8_t>(pulseValue));
-        fillScreen(currentColor);
-        yield();
-    }
+    uint8_t r = ((currentColor >> 16) & 0xFF) * normalized;
+    uint8_t g = ((currentColor >> 8) & 0xFF) * normalized;
+    uint8_t b = (currentColor & 0xFF) * normalized;
+
+    uint32_t scaledColor = matrix.Color(r, g, b);
+    fillScreen(scaledColor);
 }
 
 void DisplayHandler::fillScreen(uint32_t color) {

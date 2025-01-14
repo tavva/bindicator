@@ -1,11 +1,14 @@
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
+#include <WiFi.h>
 #include "wifi_config.h"
 #include "time_manager.h"
 #include "oauth_handler.h"
 #include "calendar_handler.h"
 #include "secrets.h"
 #include "display_handler.h"
-
-#define PIN_NEOPIXEL 14
+#include "tasks.h"
 
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
@@ -17,42 +20,42 @@ void setup() {
     Serial.println("Starting up...");
 
     display.begin();
-    display.showNeither();
+    display.matrix.clear();
+    display.matrix.setBrightness(50);
+    memset(Matrix_Data, 1, sizeof(Matrix_Data));
 
-    connectToWiFi();
-    setupTime();
+    commandQueue = xQueueCreate(10, sizeof(Command));
 
-    if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-        updateDisplay(hasRecycling, hasRubbish);
-    }
+    xTaskCreate(
+        animationTask,
+        "Animation",
+        10000,
+        NULL,
+        3,
+        NULL
+    );
 
-    Serial.println("Setup complete - entering loop");
+    xTaskCreate(
+        wifiTask,
+        "WiFi",
+        10000,
+        NULL,
+        1,
+        NULL
+    );
 
-    // Ensure all serial data is sent to prevent hangs
-    Serial.flush();
-    delay(100);
+    xTaskCreate(
+        calendarTask,
+        "Calendar",
+        10000,
+        NULL,
+        1,
+        NULL
+    );
+
+    Serial.println("Tasks created");
 }
 
 void loop() {
-    static unsigned long lastCheck = 0;
-    if (millis() - lastCheck >= 3600000) {
-        Serial.println("Checking for bin events");
-        if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-            updateDisplay(hasRecycling, hasRubbish);
-        }
-        lastCheck = millis();
-    }
-
-    display.update();
-    yield(); // to prevent hangs
-}
-
-void updateDisplay(bool hasRecycling, bool hasRubbish) {
-    if (hasRecycling) {
-        display.showRecycling();
-    } else if (hasRubbish) {
-        display.showRubbish();
-    } else {
-        display.showNeither();
-    }
+    vTaskDelete(NULL);
 }
