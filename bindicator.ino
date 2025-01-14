@@ -33,6 +33,8 @@ void loop() {
         }
         lastCheck = millis();
     }
+
+    display.update(); // for animations
 }
 
 void updateDisplay(bool hasRecycling, bool hasRubbish) {
