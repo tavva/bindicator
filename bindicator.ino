@@ -26,8 +26,7 @@ void setup() {
 
 void loop() {
     static unsigned long lastCheck = 0;
-    // if (millis() - lastCheck >= 3600000) { // Check every hour
-    if (millis() - lastCheck >= 15000) { // Check every 15 seconds
+    if (millis() - lastCheck >= 3600000) { // Check every hour
         if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
             updateDisplay(hasRecycling, hasRubbish);
         }
