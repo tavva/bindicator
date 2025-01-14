@@ -1,7 +1,7 @@
 #include "display_handler.h"
 
 DisplayHandler::DisplayHandler(uint8_t pin)
-    : matrix(MATRIX_WIDTH * MATRIX_HEIGHT, pin, NEO_GRB + NEO_KHZ800) {
+    : matrix(MATRIX_WIDTH * MATRIX_HEIGHT, pin, NEO_RGB + NEO_KHZ800) {
 }
 
 void DisplayHandler::begin() {
