@@ -10,7 +10,6 @@
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
 DisplayHandler display;
-bool hasRecycling, hasRubbish;
 
 void setup() {
     Serial.begin(115200);
@@ -21,19 +20,39 @@ void setup() {
 
     connectToWiFi();
     setupTime();
-    Serial.println("Setup complete");
+
+    if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
+        updateDisplay(hasRecycling, hasRubbish);
+    }
+
+    Serial.println("Setup complete - entering loop");
+
+    // Ensure all serial data is sent to prevent hangs
+    Serial.flush();
+    delay(100);
 }
 
 void loop() {
+    static bool firstLoop = true;
+    if (firstLoop) {
+        Serial.println("First loop entry");
+        Serial.flush();
+        firstLoop = false;
+    }
+
+    Serial.println("Loop entry");
     static unsigned long lastCheck = 0;
-    if (millis() - lastCheck >= 3600000) { // Check every hour
+    if (millis() - lastCheck >= 3600000) {
+        Serial.println("Checking for bin events");
+        bool hasRecycling, hasRubbish;
         if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
             updateDisplay(hasRecycling, hasRubbish);
         }
         lastCheck = millis();
     }
 
-    display.update(); // for animations
+    display.update();
+    yield(); // to prevent hangs
 }
 
 void updateDisplay(bool hasRecycling, bool hasRubbish) {
