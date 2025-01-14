@@ -9,5 +9,6 @@ extern const char* WIFI_PASSWORD;
 extern const String CLIENT_ID;
 extern const String CLIENT_SECRET;
 extern const String REFRESH_TOKEN;
+extern const String CALENDAR_ID;
 
 #endif

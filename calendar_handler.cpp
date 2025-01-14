@@ -1,3 +1,4 @@
+#include "secrets.h"
 #include "calendar_handler.h"
 
 CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler, const String& calendarId)

@@ -6,8 +6,6 @@
 
 #define PIN_NEOPIXEL 14
 
-const String CALENDAR_ID = "primary";
-
 OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
 CalendarHandler calendar(oauth, CALENDAR_ID);
 
