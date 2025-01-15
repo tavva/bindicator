@@ -128,14 +128,6 @@ void setup() {
 
     display.begin();
 
-    WiFi.mode(WIFI_STA);
-    delay(500);
-
-    setupServer.begin();
-    delay(100);
-
-    oauth.begin(setupServer.server);
-
     if (!setupServer.isConfigured() || !oauth.isAuthorized()) {
         startSetupMode();
     } else {
