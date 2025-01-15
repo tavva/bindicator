@@ -12,6 +12,8 @@ const uint8_t Animations::exclamation[8][8] = {
 };
 
 int Animations::brightnessTick = 0;
+int Animations::loadingPos = 0;
+int Animations::animationCounter = 0;
 
 const Color Animations::ERROR_RED(50, 0, 0);
 const Color Animations::ERROR_DOT_BLUE(0, 0, 50);
@@ -69,7 +71,15 @@ void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
     }
 }
 
-void Animations::drawLoading(DisplayHandler& display, int loadingPos) {
+void Animations::updateLoadingPosition() {
+    animationCounter++;
+    if (animationCounter >= ANIMATION_SPEED) {
+        animationCounter = 0;
+        loadingPos = (loadingPos + 1) % 24;
+    }
+}
+
+void Animations::drawLoading(DisplayHandler& display) {
     int pos1_row, pos1_col, pos2_row, pos2_col;
 
     if (loadingPos < 6) {
@@ -104,6 +114,8 @@ void Animations::drawLoading(DisplayHandler& display, int loadingPos) {
 
     display.matrix.setPixelColor(pos1_row * 8 + pos1_col, display.matrix.Color(30, 30, 30));
     display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(30, 30, 30));
+
+    updateLoadingPosition();
 }
 
 void Animations::drawPulse(DisplayHandler& display, Color color) {

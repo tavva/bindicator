@@ -76,14 +76,9 @@ void animationTask(void* parameter) {
         display.matrix.clear();
 
         if (isError) {
-            Animations::drawError(display, color, dotColor);
+            Animations::drawError(display, ErrorType::API);
         } else if (isLoading) {
-            Animations::drawLoading(display, loadingPos);
-            animationCounter++;
-            if (animationCounter >= ANIMATION_SPEED) {
-                animationCounter = 0;
-                loadingPos = (loadingPos + 1) % 24;
-            }
+            Animations::drawLoading(display);
         } else {
             Animations::drawPulse(display, color);
         }

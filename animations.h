@@ -23,13 +23,18 @@ enum class ErrorType {
 class Animations {
     public:
         static void drawError(DisplayHandler& display, ErrorType type);
-        static void drawLoading(DisplayHandler& display, int loadingPos);
+        static void drawLoading(DisplayHandler& display);
         static void drawPulse(DisplayHandler& display, Color color);
 
     private:
         static const uint8_t exclamation[8][8];
         static int brightnessTick;
+        static int loadingPos;
+        static int animationCounter;
+        static const int ANIMATION_SPEED = 4;
+
         static uint8_t calculateBrightness();
+        static void updateLoadingPosition();
 
         static const Color ERROR_RED;
         static const Color ERROR_DOT_BLUE;
