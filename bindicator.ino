@@ -13,6 +13,7 @@
 #include "setup_server.h"
 #include "animations.h"
 #include "config_manager.h"
+#include "serial_commands.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 CalendarHandler calendar(oauth, GOOGLE_CALENDAR_ID);
@@ -121,6 +122,7 @@ void startNormalMode() {
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
+    SerialCommands::begin();
     delay(2000);
 
     ConfigManager::begin();
@@ -148,23 +150,9 @@ void setup() {
     }
 }
 
-void handleSerialCommands() {
-    if (Serial.available()) {
-        String command = Serial.readStringUntil('\n');
-        command.trim();
-
-        if (command == "clear") {
-            Serial.println("Clearing all preferences...");
-            clearAllPreferences();
-        } else if (command == "help") {
-            Serial.println("\nAvailable commands:");
-            Serial.println("clear - Clear all preferences and restart");
-            Serial.println("help  - Show this help message");
-        }
-    }
-}
-
 void loop() {
+    SerialCommands::handle();
+
     if (inSetupMode) {
         setupServer.handleClient();
 
@@ -175,24 +163,5 @@ void loop() {
         }
 
         yield();
-    } else {
-        handleSerialCommands();
     }
-}
-
-void clearAllPreferences() {
-    Serial.println("Clearing all preferences...");
-
-    Preferences systemPrefs;
-    systemPrefs.begin("system", false);
-    systemPrefs.clear();
-    systemPrefs.end();
-
-    Preferences oauthPrefs;
-    oauthPrefs.begin("oauth", false);
-    oauthPrefs.clear();
-    oauthPrefs.end();
-
-    Serial.println("All preferences cleared!");
-    ESP.restart();
 }
