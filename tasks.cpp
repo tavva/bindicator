@@ -20,11 +20,7 @@ void animationTask(void* parameter) {
 
     static bool isLoading = true;
     static bool isError = false;
-    static int loadingPos = 0;
     static Color color = Animations::DEFAULT_BLUE;
-    static Color dotColor;
-    static int animationCounter = 0;
-    const int ANIMATION_SPEED = 4;
 
     extern DisplayHandler display;
 
