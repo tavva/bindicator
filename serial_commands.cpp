@@ -14,6 +14,8 @@ void SerialCommands::handle() {
             clearAllPreferences();
         } else if (command == "help") {
             showHelp();
+        } else if (command == "prefs") {
+            showPreferences();
         }
     }
 }
@@ -36,5 +38,36 @@ void SerialCommands::clearAllPreferences() {
 void SerialCommands::showHelp() {
     Serial.println("\nAvailable commands:");
     Serial.println("clear - Clear all preferences and restart");
+    Serial.println("prefs - Show all stored preferences");
     Serial.println("help  - Show this help message");
+}
+
+void SerialCommands::printNamespace(const char* name) {
+    Preferences prefs;
+    prefs.begin(name, true);  // Read-only mode
+
+    Serial.printf("\n=== %s namespace ===\n", name);
+
+    if (strcmp(name, "system") == 0) {
+        String ssid = prefs.getString("wifi_ssid", "");
+        String pass = prefs.getString("wifi_pass", "");
+        Serial.printf("wifi_ssid: %s\n", ssid.isEmpty() ? "(empty)" : ssid.c_str());
+        Serial.printf("wifi_pass: %s\n", pass.isEmpty() ? "(empty)" : "(set)");
+    }
+    else if (strcmp(name, "oauth") == 0) {
+        String token = prefs.getString("refresh_token", "");
+        Serial.printf("refresh_token: %s\n", token.isEmpty() ? "(empty)" : "(set)");
+    }
+
+    prefs.end();
+}
+
+void SerialCommands::showPreferences() {
+    Serial.println("\nStored Preferences:");
+    Serial.println("------------------");
+
+    printNamespace("system");
+    printNamespace("oauth");
+
+    Serial.println("------------------");
 }
