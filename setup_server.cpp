@@ -41,9 +41,13 @@ bool SetupServer::isConfigured() {
 }
 
 bool SetupServer::loadConfig() {
+    if (!SPIFFS.exists(CONFIG_FILE)) {
+        return false;
+    }
+
     File file = SPIFFS.open(CONFIG_FILE, "r");
     if(!file) {
-        Serial.println("No configuration file found");
+        Serial.println("Can't open config file");
         return false;
     }
 
