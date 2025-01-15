@@ -18,6 +18,7 @@ class OAuthHandler {
         bool isAuthorized();
         bool getValidToken(String& token);
         String getAuthUrl();
+        bool hasStoredToken();
 
     private:
         const String GOOGLE_CLIENT_ID;

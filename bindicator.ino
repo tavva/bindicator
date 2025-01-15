@@ -132,7 +132,7 @@ void setup() {
         1
     );
 
-    if (!setupServer.isConfigured() || !oauth.isAuthorized()) {
+    if (!setupServer.isConfigured() || !oauth.hasStoredToken()) {
         Serial.println("No valid configuration found - entering setup mode");
         startSetupMode();
     } else {

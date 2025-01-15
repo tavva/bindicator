@@ -15,7 +15,8 @@ void OAuthHandler::begin(WebServer* server) {
 
 bool OAuthHandler::isAuthorized() {
     refresh_token = loadRefreshToken();
-    Serial.print("Checking authorization. Refresh token: ");
+    Serial.print("Checking authorisation. Refresh token: ");
+    Serial.println(refresh_token);
     Serial.println(refresh_token.isEmpty() ? "empty" : "present");
     return !refresh_token.isEmpty();
 }
@@ -174,4 +175,12 @@ void OAuthHandler::handleTokenRequest(WebServer* server) {
     } else {
         server->send(400, "text/plain", "No refresh token provided");
     }
+}
+
+bool OAuthHandler::hasStoredToken() {
+    Preferences prefs;
+    prefs.begin("oauth", true);  // true = read-only mode
+    String token = prefs.getString("refresh_token", "");
+    prefs.end();
+    return !token.isEmpty();
 }
