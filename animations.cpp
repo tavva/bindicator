@@ -7,7 +7,7 @@ const uint8_t Animations::exclamation[8][8] = {
     {0,0,0,1,1,0,0,0},
     {0,0,0,1,1,0,0,0},
     {0,0,0,0,0,0,0,0},
-    {0,0,0,1,1,0,0,0},
+    {0,0,0,2,2,0,0,0},
     {0,0,0,0,0,0,0,0}
 };
 
@@ -15,21 +15,22 @@ void Animations::drawError(DisplayHandler& display, uint8_t r, uint8_t g, uint8_
                          uint8_t dot_r, uint8_t dot_g, uint8_t dot_b, uint8_t brightness) {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            if (exclamation[row][col]) {
-                if (row == 6) {  // dot
-                    display.matrix.setPixelColor(row * 8 + col,
-                        display.matrix.Color(
-                            (dot_r * brightness) / 64,
-                            (dot_g * brightness) / 64,
-                            (dot_b * brightness) / 64
-                        )
-                    );
-                } else {  // stroke
+            int value = exclamation[row][col];
+            if (value > 0) {
+                if (value == 1) {  // stroke
                     display.matrix.setPixelColor(row * 8 + col,
                         display.matrix.Color(
                             (r * brightness) / 64,
                             (g * brightness) / 64,
                             (b * brightness) / 64
+                        )
+                    );
+                } else if (value == 2) {  // dot
+                    display.matrix.setPixelColor(row * 8 + col,
+                        display.matrix.Color(
+                            (dot_r * brightness) / 64,
+                            (dot_g * brightness) / 64,
+                            (dot_b * brightness) / 64
                         )
                     );
                 }
