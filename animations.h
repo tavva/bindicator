@@ -22,6 +22,14 @@ enum class ErrorType {
 
 class Animations {
     public:
+        static const Color ERROR_RED;
+        static const Color ERROR_DOT_BLUE;
+        static const Color ERROR_DOT_YELLOW;
+        static const Color ERROR_DOT_PURPLE;
+        static const Color RECYCLING_GREEN;
+        static const Color RUBBISH_BROWN;
+        static const Color DEFAULT_BLUE;
+
         static void drawError(DisplayHandler& display, ErrorType type);
         static void drawLoading(DisplayHandler& display);
         static void drawPulse(DisplayHandler& display, Color color);
@@ -35,14 +43,7 @@ class Animations {
 
         static uint8_t calculateBrightness();
         static void updateLoadingPosition();
-
-        static const Color ERROR_RED;
-        static const Color ERROR_DOT_BLUE;
-        static const Color ERROR_DOT_YELLOW;
-        static const Color ERROR_DOT_PURPLE;
-        static const Color RECYCLING_GREEN;
-        static const Color RUBBISH_BROWN;
-        static const Color DEFAULT_BLUE;
+        static void drawError(DisplayHandler& display, Color stroke, Color dot);
 };
 
 #endif
