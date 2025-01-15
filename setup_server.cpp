@@ -2,26 +2,38 @@
 
 const char* SetupServer::CONFIG_FILE = "/config.json";
 
-SetupServer::SetupServer(OAuthHandler& oauth) : server(80), oauthHandler(oauth) {}
+SetupServer::SetupServer(OAuthHandler& oauth)
+    : oauthHandler(oauth), server(nullptr) {
+}
+
+SetupServer::~SetupServer() {
+    if (server != nullptr) {
+        delete server;
+    }
+}
 
 void SetupServer::begin() {
+    if (server == nullptr) {
+        server = new WebServer(80);
+    }
+
     loadConfig();
 
-    server.on("/", HTTP_GET, std::bind(&SetupServer::handleRoot, this));
-    server.on("/save", HTTP_POST, std::bind(&SetupServer::handleSave, this));
-    server.on("/oauth", HTTP_GET, [this]() {
+    server->on("/", HTTP_GET, std::bind(&SetupServer::handleRoot, this));
+    server->on("/save", HTTP_POST, std::bind(&SetupServer::handleSave, this));
+    server->on("/oauth", HTTP_GET, [this]() {
         String authUrl = oauthHandler.getAuthUrl();
-        server.sendHeader("Location", authUrl);
-        server.send(302);
+        server->sendHeader("Location", authUrl);
+        server->send(302);
     });
-    server.on("/oauth_callback", HTTP_GET, std::bind(&SetupServer::handleOAuth, this));
+    server->on("/oauth_callback", HTTP_GET, std::bind(&SetupServer::handleOAuth, this));
 
-    server.begin();
+    server->begin();
     Serial.println("Setup server started");
 }
 
 void SetupServer::handleClient() {
-    server.handleClient();
+    server->handleClient();
 }
 
 bool SetupServer::isConfigured() {
@@ -79,13 +91,13 @@ bool SetupServer::saveConfig() {
 }
 
 void SetupServer::handleRoot() {
-    server.send(200, "text/html", getSetupPage());
+    server->send(200, "text/html", getSetupPage());
 }
 
 void SetupServer::handleSave() {
-    if (server.hasArg("ssid")) {
-        config.wifi_ssid = server.arg("ssid");
-        config.wifi_password = server.arg("password");
+    if (server->hasArg("ssid") && server->hasArg("password")) {
+        config.wifi_ssid = server->arg("ssid");
+        config.wifi_password = server->arg("password");
 
         if (saveConfig()) {
             String html = R"html(
@@ -121,14 +133,14 @@ void SetupServer::handleSave() {
 </body>
 </html>)html";
 
-            server.send(200, "text/html", html);
+            server->send(200, "text/html", html);
             delay(5000);
             ESP.restart();
         } else {
-            server.send(500, "text/plain", "Failed to save configuration");
+            server->send(500, "text/plain", "Failed to save configuration");
         }
     } else {
-        server.send(400, "text/plain", "No SSID provided");
+        server->send(400, "text/plain", "Missing parameters");
     }
 }
 
@@ -216,16 +228,16 @@ const char* SetupServer::getSetupPage() {
 }
 
 void SetupServer::handleOAuth() {
-    if (server.hasArg("code")) {
-        String code = server.arg("code");
+    if (server->hasArg("code")) {
+        String code = server->arg("code");
         String error;
 
         if (oauthHandler.exchangeAuthCode(code, error)) {
-            server.send(200, "text/plain", "OK");
+            server->send(200, "text/plain", "OK");
         } else {
-            server.send(400, "text/plain", "Failed to exchange auth code: " + error);
+            server->send(400, "text/plain", "Failed to exchange auth code: " + error);
         }
     } else {
-        server.send(400, "text/plain", "No auth code provided");
+        server->send(400, "text/plain", "No auth code provided");
     }
 }

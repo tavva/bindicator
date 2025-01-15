@@ -6,11 +6,11 @@ OAuthHandler::OAuthHandler(const String& clientId, const String& clientSecret, c
       GOOGLE_CLIENT_SECRET(clientSecret),
       GOOGLE_REDIRECT_URI(redirectUri) {}
 
-void OAuthHandler::begin(WebServer& server) {
+void OAuthHandler::begin(WebServer* server) {
     preferences.begin("oauth", false);
     refresh_token = loadRefreshToken();
-    server.on("/oauth_callback", HTTP_GET, std::bind(&OAuthHandler::handleOAuthRequest, this, std::ref(server)));
-    server.on("/token", HTTP_POST, std::bind(&OAuthHandler::handleTokenRequest, this, std::ref(server)));
+    server->on("/oauth_callback", HTTP_GET, std::bind(&OAuthHandler::handleOAuthRequest, this, server));
+    server->on("/token", HTTP_POST, std::bind(&OAuthHandler::handleTokenRequest, this, server));
 }
 
 bool OAuthHandler::isAuthorized() {
@@ -20,13 +20,13 @@ bool OAuthHandler::isAuthorized() {
     return !refresh_token.isEmpty();
 }
 
-void OAuthHandler::handleOAuthRequest(WebServer& server) {
-    if (server.hasArg("code")) {
+void OAuthHandler::handleOAuthRequest(WebServer* server) {
+    if (server->hasArg("code")) {
         String error;
-        if (exchangeAuthCode(server.arg("code"), error)) {
-            server.send(200, "text/html", "<h1>Authorization Successful!</h1><p>You can close this window.</p>");
+        if (exchangeAuthCode(server->arg("code"), error)) {
+            server->send(200, "text/html", "<h1>Authorization Successful!</h1><p>You can close this window.</p>");
         } else {
-            server.send(400, "text/html", "<h1>Authorization Failed</h1><p>Error: " + error + "</p>");
+            server->send(400, "text/html", "<h1>Authorization Failed</h1><p>Error: " + error + "</p>");
         }
     } else {
         String html = "<html><head><title>Google Calendar Authorization</title></head><body>";
@@ -34,7 +34,7 @@ void OAuthHandler::handleOAuthRequest(WebServer& server) {
         html += "<p>Click the button below to authorize access to your Google Calendar:</p>";
         html += "<a href='" + getAuthUrl() + "'><button>Authorize</button></a>";
         html += "</body></html>";
-        server.send(200, "text/html", html);
+        server->send(200, "text/html", html);
     }
 }
 
@@ -166,12 +166,12 @@ String OAuthHandler::urlEncode(const String& str) {
     return encoded;
 }
 
-void OAuthHandler::handleTokenRequest(WebServer& server) {
-    if (server.hasArg("refresh_token")) {
-        String token = server.arg("refresh_token");
+void OAuthHandler::handleTokenRequest(WebServer* server) {
+    if (server->hasArg("refresh_token")) {
+        String token = server->arg("refresh_token");
         saveRefreshToken(token);
-        server.send(200, "text/plain", "OK");
+        server->send(200, "text/plain", "OK");
     } else {
-        server.send(400, "text/plain", "No refresh token provided");
+        server->send(400, "text/plain", "No refresh token provided");
     }
 }

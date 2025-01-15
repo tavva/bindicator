@@ -9,10 +9,11 @@
 class SetupServer {
     public:
         SetupServer(OAuthHandler& oauth);
+        ~SetupServer();
         void begin();
         void handleClient();
         bool isConfigured();
-        WebServer server;
+        WebServer* server;
 
         String getWifiSSID() { return config.wifi_ssid; }
         String getWifiPassword() { return config.wifi_password; }
