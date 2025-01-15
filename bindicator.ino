@@ -63,6 +63,8 @@ void startSetupMode() {
 
     WiFi.mode(WIFI_AP_STA);
     Serial.println("WiFi mode set to AP+STA");
+    WiFi.setHostname("bindicator");
+
     delay(100);
 
     // default IP is 192.168.4.1
