@@ -21,7 +21,7 @@ void animationTask(void* parameter) {
     static bool isLoading = true;
     static bool isError = false;
     static int loadingPos = 0;
-    static Color color(0, 0, 30);
+    static Color color = Animations::DEFAULT_BLUE;
     static Color dotColor;
     static int animationCounter = 0;
     const int ANIMATION_SPEED = 4;
@@ -38,15 +38,15 @@ void animationTask(void* parameter) {
             switch(cmd) {
                 case CMD_SHOW_RECYCLING:
                     Serial.println("Switching to green (recycling)");
-                    color = Color(0, 50, 0);
+                    color = Animations::RECYCLING_GREEN;
                     break;
                 case CMD_SHOW_RUBBISH:
                     Serial.println("Switching to brown (rubbish)");
-                    color = Color(20, 40, 0);
+                    color = Animations::RUBBISH_BROWN;
                     break;
                 case CMD_SHOW_NEITHER:
                     Serial.println("Switching to blue (neither)");
-                    color = Color(0, 0, 50);
+                    color = Animations::DEFAULT_BLUE;
                     break;
                 case CMD_SHOW_LOADING:
                     Serial.println("Showing loading animation");
@@ -55,20 +55,17 @@ void animationTask(void* parameter) {
                 case CMD_SHOW_ERROR_API:
                     Serial.println("Showing API error");
                     isError = true;
-                    color = Color(50, 0, 0);
-                    dotColor = Color(0, 0, 50);
+                    Animations::drawError(display, ErrorType::API);
                     break;
                 case CMD_SHOW_ERROR_WIFI:
                     Serial.println("Showing WiFi error");
                     isError = true;
-                    color = Color(50, 0, 0);
-                    dotColor = Color(50, 50, 0);  // yellow
+                    Animations::drawError(display, ErrorType::WIFI);
                     break;
                 case CMD_SHOW_ERROR_OTHER:
                     Serial.println("Showing other error");
                     isError = true;
-                    color = Color(50, 0, 0);
-                    dotColor = Color(50, 0, 50);  // purple
+                    Animations::drawError(display, ErrorType::OTHER);
                     break;
                 default:
                     Serial.printf("Unknown command: %d\n", cmd);

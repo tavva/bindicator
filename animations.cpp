@@ -13,10 +13,34 @@ const uint8_t Animations::exclamation[8][8] = {
 
 int Animations::brightnessTick = 0;
 
+const Color Animations::ERROR_RED(50, 0, 0);
+const Color Animations::ERROR_DOT_BLUE(0, 0, 50);
+const Color Animations::ERROR_DOT_YELLOW(50, 50, 0);
+const Color Animations::ERROR_DOT_PURPLE(50, 0, 50);
+const Color Animations::RECYCLING_GREEN(0, 50, 0);
+const Color Animations::RUBBISH_BROWN(20, 40, 0);
+const Color Animations::DEFAULT_BLUE(0, 0, 50);
+
 uint8_t Animations::calculateBrightness() {
     uint8_t brightness = (brightnessTick < 32) ? brightnessTick * 2 : (64 - brightnessTick) * 2;
     brightnessTick = (brightnessTick + 1) % 64;
     return brightness;
+}
+
+void Animations::drawError(DisplayHandler& display, ErrorType type) {
+    Color dot;
+    switch(type) {
+        case ErrorType::API:
+            dot = ERROR_DOT_BLUE;
+            break;
+        case ErrorType::WIFI:
+            dot = ERROR_DOT_YELLOW;
+            break;
+        case ErrorType::OTHER:
+            dot = ERROR_DOT_PURPLE;
+            break;
+    }
+    drawError(display, ERROR_RED, dot);
 }
 
 void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
