@@ -12,6 +12,9 @@ void SerialCommands::handle() {
         if (command == "clear") {
             Serial.println("Clearing all preferences...");
             clearAllPreferences();
+        } else if (command == "clear_oauth") {
+            Serial.println("Clearing OAuth preferences...");
+            clearOAuthPreferences();
         } else if (command == "help") {
             showHelp();
         } else if (command == "prefs") {
@@ -35,11 +38,22 @@ void SerialCommands::clearAllPreferences() {
     ESP.restart();
 }
 
+void SerialCommands::clearOAuthPreferences() {
+    Preferences oauthPrefs;
+    oauthPrefs.begin("oauth", false);
+    oauthPrefs.clear();
+    oauthPrefs.end();
+
+    Serial.println("OAuth preferences cleared!");
+    ESP.restart();
+}
+
 void SerialCommands::showHelp() {
     Serial.println("\nAvailable commands:");
-    Serial.println("clear - Clear all preferences and restart");
-    Serial.println("prefs - Show all stored preferences");
-    Serial.println("help  - Show this help message");
+    Serial.println("clear       - Clear all preferences and restart");
+    Serial.println("clear_oauth - Clear only OAuth preferences and restart");
+    Serial.println("prefs       - Show all stored preferences");
+    Serial.println("help        - Show this help message");
 }
 
 void SerialCommands::printNamespace(const char* name) {

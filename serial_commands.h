@@ -11,6 +11,7 @@ class SerialCommands {
 
     private:
         static void clearAllPreferences();
+        static void clearOAuthPreferences();
         static void showHelp();
         static void showPreferences();
         static void printNamespace(const char* name);
