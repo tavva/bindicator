@@ -56,6 +56,7 @@ bool SetupServer::loadConfig() {
     file.close();
 
     if(error) {
+        Serial.println("error: " + String(error.c_str()));
         Serial.println("Failed to parse config file");
         return false;
     }
