@@ -39,6 +39,7 @@ void Animations::drawError(DisplayHandler& display, ErrorType type) {
             dot = ERROR_DOT_YELLOW;
             break;
         case ErrorType::OTHER:
+        default:
             dot = ERROR_DOT_PURPLE;
             break;
     }
