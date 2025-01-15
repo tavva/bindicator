@@ -29,6 +29,34 @@ bool setupMDNS() {
     return true;
 }
 
+bool tryWiFiConnection(int maxAttempts = 3) {
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+        Serial.printf("\nWiFi connection attempt %d of %d\n", attempt, maxAttempts);
+
+        WiFi.setHostname("bindicator");
+        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
+
+        int waitCount = 0;
+        while (WiFi.status() != WL_CONNECTED && waitCount < 20) {
+            delay(500);
+            Serial.print(".");
+            waitCount++;
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("\nWiFi connected!");
+            Serial.println("IP address: ");
+            Serial.println(WiFi.localIP());
+            return true;
+        }
+
+        Serial.println("\nWiFi connection failed");
+        WiFi.disconnect();
+        delay(1000);
+    }
+    return false;
+}
+
 void startSetupMode() {
     Serial.println("Entering setup mode");
     inSetupMode = true;
@@ -60,33 +88,6 @@ void startSetupMode() {
     Serial.println("Web server started");
     oauth.begin(setupServer.server);
     Serial.println("OAuth handler initialized");
-}
-
-bool tryWiFiConnection(int maxAttempts = 3) {
-    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-        Serial.printf("\nWiFi connection attempt %d of %d\n", attempt, maxAttempts);
-
-        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
-
-        int waitCount = 0;
-        while (WiFi.status() != WL_CONNECTED && waitCount < 20) {
-            delay(500);
-            Serial.print(".");
-            waitCount++;
-        }
-
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("\nWiFi connected!");
-            Serial.println("IP address: ");
-            Serial.println(WiFi.localIP());
-            return true;
-        }
-
-        Serial.println("\nWiFi connection failed");
-        WiFi.disconnect();
-        delay(1000);
-    }
-    return false;
 }
 
 void startNormalMode() {
