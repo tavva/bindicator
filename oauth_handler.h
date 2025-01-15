@@ -32,6 +32,7 @@ class OAuthHandler {
         String refresh_token;
         unsigned long token_expiry;
         Preferences preferences;
+        bool prefsInitialized = false;
 
         void handleTokenRequest(WebServer* server);
         bool refreshAccessToken();

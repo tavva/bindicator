@@ -7,7 +7,7 @@ OAuthHandler::OAuthHandler(const String& clientId, const String& clientSecret, c
       GOOGLE_REDIRECT_URI(redirectUri) {}
 
 void OAuthHandler::begin(WebServer* server) {
-    preferences.begin("oauth", false);
+    prefsInitialized = preferences.begin("oauth", false);
     refresh_token = loadRefreshToken();
     server->on("/oauth_callback", HTTP_GET, std::bind(&OAuthHandler::handleOAuthRequest, this, server));
     server->on("/token", HTTP_POST, std::bind(&OAuthHandler::handleTokenRequest, this, server));
@@ -131,10 +131,18 @@ bool OAuthHandler::refreshAccessToken() {
 }
 
 void OAuthHandler::saveRefreshToken(const String& token) {
+    if (!prefsInitialized) {
+        Serial.println("Preferences not initialized");
+        return;
+    }
     preferences.putString("refresh_token", token);
 }
 
 String OAuthHandler::loadRefreshToken() {
+    if (!prefsInitialized) {
+        Serial.println("Preferences not initialized");
+        return "";
+    }
     return preferences.getString("refresh_token", "");
 }
 
