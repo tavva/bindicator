@@ -129,6 +129,8 @@ void setup() {
 
     display.begin();
 
+    oauth.begin(nullptr);
+
     commandQueue = xQueueCreate(10, sizeof(Command));
 
     xTaskCreatePinnedToCore(

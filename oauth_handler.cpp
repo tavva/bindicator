@@ -9,8 +9,12 @@ OAuthHandler::OAuthHandler(const String& clientId, const String& clientSecret, c
 void OAuthHandler::begin(WebServer* server) {
     prefsInitialized = preferences.begin("oauth", false);
     refresh_token = loadRefreshToken();
-    server->on("/oauth_callback", HTTP_GET, std::bind(&OAuthHandler::handleOAuthRequest, this, server));
-    server->on("/token", HTTP_POST, std::bind(&OAuthHandler::handleTokenRequest, this, server));
+
+    serverAvailable = (server != nullptr);
+    if (serverAvailable) {
+        server->on("/oauth_callback", HTTP_GET, std::bind(&OAuthHandler::handleOAuthRequest, this, server));
+        server->on("/token", HTTP_POST, std::bind(&OAuthHandler::handleTokenRequest, this, server));
+    }
 }
 
 bool OAuthHandler::isAuthorized() {
@@ -22,6 +26,7 @@ bool OAuthHandler::isAuthorized() {
 }
 
 void OAuthHandler::handleOAuthRequest(WebServer* server) {
+    if (!serverAvailable) return;
     if (server->hasArg("code")) {
         String error;
         if (exchangeAuthCode(server->arg("code"), error)) {
@@ -188,6 +193,7 @@ String OAuthHandler::urlEncode(const String& str) {
 }
 
 void OAuthHandler::handleTokenRequest(WebServer* server) {
+    if (!serverAvailable) return;
     if (server->hasArg("refresh_token")) {
         String token = server->arg("refresh_token");
         saveRefreshToken(token);

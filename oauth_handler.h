@@ -10,7 +10,7 @@
 class OAuthHandler {
     public:
         OAuthHandler(const String& clientId, const String& clientSecret, const String& redirectUri);
-        void begin(WebServer* server);
+        void begin(WebServer* server = nullptr);
         void handleOAuthRequest(WebServer* server);
         bool exchangeAuthCode(const String& code, String& error);
         String getAccessToken() { return access_token; }
@@ -33,6 +33,8 @@ class OAuthHandler {
         unsigned long token_expiry;
         Preferences preferences;
         bool prefsInitialized = false;
+        WebServer* server;
+        bool serverAvailable;
 
         void handleTokenRequest(WebServer* server);
         bool refreshAccessToken();
