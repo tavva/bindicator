@@ -43,8 +43,15 @@ list:
 	@${hr}
 	@${CLI} board listall
 
-monitor:
+monitor-once:
 	@${hr}
 	@echo Starting serial monitor...
 	@${hr}
 	@${CLI} monitor -p $(PORT) --fqbn $(BOARD)
+
+monitor:
+	@while true; do \
+		make monitor-once; \
+		echo "No connection, restarting..."; \
+		sleep 1; \
+	done
