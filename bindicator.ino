@@ -148,6 +148,22 @@ void setup() {
     }
 }
 
+void handleSerialCommands() {
+    if (Serial.available()) {
+        String command = Serial.readStringUntil('\n');
+        command.trim();
+
+        if (command == "clear") {
+            Serial.println("Clearing all preferences...");
+            clearAllPreferences();
+        } else if (command == "help") {
+            Serial.println("\nAvailable commands:");
+            Serial.println("clear - Clear all preferences and restart");
+            Serial.println("help  - Show this help message");
+        }
+    }
+}
+
 void loop() {
     if (inSetupMode) {
         setupServer.handleClient();
@@ -159,5 +175,24 @@ void loop() {
         }
 
         yield();
+    } else {
+        handleSerialCommands();
     }
+}
+
+void clearAllPreferences() {
+    Serial.println("Clearing all preferences...");
+
+    Preferences systemPrefs;
+    systemPrefs.begin("system", false);
+    systemPrefs.clear();
+    systemPrefs.end();
+
+    Preferences oauthPrefs;
+    oauthPrefs.begin("oauth", false);
+    oauthPrefs.clear();
+    oauthPrefs.end();
+
+    Serial.println("All preferences cleared!");
+    ESP.restart();
 }
