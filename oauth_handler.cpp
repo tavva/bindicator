@@ -78,7 +78,14 @@ bool OAuthHandler::exchangeAuthCode(const String& code, String& error) {
         int expires_in = doc["expires_in"];
         token_expiry = millis() + (expires_in * 1000);
 
-        saveRefreshToken(refresh_token);
+        Serial.println("Received refresh token: " + refresh_token);
+
+        preferences.begin("oauth", false);
+        bool saved = preferences.putString("refresh_token", refresh_token);
+        Serial.print("Saved refresh token status: ");
+        Serial.println(saved ? "SUCCESS" : "FAILED");
+        preferences.end();
+
         http.end();
         return true;
     }
@@ -140,10 +147,15 @@ void OAuthHandler::saveRefreshToken(const String& token) {
 
 String OAuthHandler::loadRefreshToken() {
     if (!prefsInitialized) {
-        Serial.println("Preferences not initialized");
+        Serial.println("ERROR: Preferences not initialized!");
         return "";
     }
-    return preferences.getString("refresh_token", "");
+
+    String token = preferences.getString("refresh_token", "");
+    Serial.print("Loaded refresh token from preferences: ");
+    Serial.println(token.isEmpty() ? "EMPTY" : token);
+
+    return token;
 }
 
 String OAuthHandler::urlEncode(const String& str) {
@@ -187,8 +199,15 @@ void OAuthHandler::handleTokenRequest(WebServer* server) {
 
 bool OAuthHandler::hasStoredToken() {
     Preferences prefs;
-    prefs.begin("oauth", true);  // true = read-only mode
+    prefs.begin("oauth", true); // Read-only mode
+    bool hasToken = prefs.isKey("refresh_token");
     String token = prefs.getString("refresh_token", "");
     prefs.end();
-    return !token.isEmpty();
+
+    Serial.print("Checking stored token - exists: ");
+    Serial.print(hasToken ? "YES" : "NO");
+    Serial.print(", value: ");
+    Serial.println(token);
+
+    return hasToken && !token.isEmpty();
 }
