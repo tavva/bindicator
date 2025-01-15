@@ -18,6 +18,7 @@ void animationTask(void* parameter) {
     Serial.println("Animation task started");
 
     static bool isLoading = true;
+    static bool isSetupMode = false;
     static bool isError = false;
     static Color color = Animations::DEFAULT_BLUE;
 
@@ -47,6 +48,10 @@ void animationTask(void* parameter) {
                     Serial.println("Showing loading animation");
                     isLoading = true;
                     break;
+                case CMD_SHOW_SETUP_MODE:
+                    Serial.println("Showing setup mode");
+                    isSetupMode = true;
+                    break;
                 case CMD_SHOW_ERROR_API:
                     Serial.println("Showing API error");
                     isError = true;
@@ -74,6 +79,8 @@ void animationTask(void* parameter) {
             Animations::drawError(display, ErrorType::API);
         } else if (isLoading) {
             Animations::drawLoading(display);
+        } else if (isSetupMode) {
+            Animations::drawSetupMode(display);
         } else {
             Animations::drawPulse(display, color);
         }

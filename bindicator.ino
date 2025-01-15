@@ -11,6 +11,7 @@
 #include "display_handler.h"
 #include "tasks.h"
 #include "setup_server.h"
+#include "animations.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 CalendarHandler calendar(oauth, GOOGLE_CALENDAR_ID);
@@ -90,21 +91,12 @@ void startSetupMode() {
     Serial.println("Web server started");
     oauth.begin(setupServer.server);
     Serial.println("OAuth handler initialized");
+
+    Command cmd = CMD_SHOW_SETUP_MODE;
+    xQueueSend(commandQueue, &cmd, 0);
 }
 
 void startNormalMode() {
-    commandQueue = xQueueCreate(10, sizeof(Command));
-
-    xTaskCreatePinnedToCore(
-        animationTask,
-        "AnimationTask",
-        8192,
-        NULL,
-        2,
-        NULL,
-        1
-    );
-
     xTaskCreatePinnedToCore(
         calendarTask,
         "CalendarTask",
@@ -128,9 +120,23 @@ void setup() {
 
     display.begin();
 
+    commandQueue = xQueueCreate(10, sizeof(Command));
+
+    xTaskCreatePinnedToCore(
+        animationTask,
+        "AnimationTask",
+        8192,
+        NULL,
+        2,
+        NULL,
+        1
+    );
+
     if (!setupServer.isConfigured() || !oauth.isAuthorized()) {
+        Serial.println("No valid configuration found - entering setup mode");
         startSetupMode();
     } else {
+        Serial.println("Configuration loaded - starting normal mode");
         startNormalMode();
     }
 }

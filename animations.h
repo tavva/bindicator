@@ -29,9 +29,13 @@ class Animations {
         static const Color RECYCLING_GREEN;
         static const Color RUBBISH_BROWN;
         static const Color DEFAULT_BLUE;
+        static const Color SETUP_YELLOW;
+        static const Color LOADING_WHITE;
 
         static void drawError(DisplayHandler& display, ErrorType type);
+        static void drawPrepare(DisplayHandler& display);
         static void drawLoading(DisplayHandler& display);
+        static void drawSetupMode(DisplayHandler& display);
         static void drawPulse(DisplayHandler& display, Color color);
 
     private:
@@ -40,6 +44,7 @@ class Animations {
         static int loadingPos;
         static int animationCounter;
         static const int ANIMATION_SPEED = 4;
+        static Color prepareColor;
 
         static uint8_t calculateBrightness();
         static void updateLoadingPosition();

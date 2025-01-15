@@ -22,6 +22,10 @@ const Color Animations::ERROR_DOT_PURPLE(50, 0, 50);
 const Color Animations::RECYCLING_GREEN(0, 50, 0);
 const Color Animations::RUBBISH_BROWN(20, 40, 0);
 const Color Animations::DEFAULT_BLUE(0, 0, 50);
+const Color Animations::SETUP_YELLOW(50, 50, 0);
+const Color Animations::LOADING_WHITE(50, 50, 50);
+
+Color Animations::prepareColor = LOADING_WHITE;
 
 uint8_t Animations::calculateBrightness() {
     uint8_t brightness = (brightnessTick < 32) ? brightnessTick * 2 : (64 - brightnessTick) * 2;
@@ -80,7 +84,7 @@ void Animations::updateLoadingPosition() {
     }
 }
 
-void Animations::drawLoading(DisplayHandler& display) {
+void Animations::drawPrepare(DisplayHandler& display) {
     int pos1_row, pos1_col, pos2_row, pos2_col;
 
     if (loadingPos < 6) {
@@ -113,10 +117,20 @@ void Animations::drawLoading(DisplayHandler& display) {
         pos2_col = 1;
     }
 
-    display.matrix.setPixelColor(pos1_row * 8 + pos1_col, display.matrix.Color(30, 30, 30));
-    display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(30, 30, 30));
+    display.matrix.setPixelColor(pos1_row * 8 + pos1_col, display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
+    display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
 
     updateLoadingPosition();
+}
+
+void Animations::drawLoading(DisplayHandler& display) {
+    prepareColor = LOADING_WHITE;
+    drawPrepare(display);
+}
+
+void Animations::drawSetupMode(DisplayHandler& display) {
+    prepareColor = SETUP_YELLOW;
+    drawPrepare(display);
 }
 
 void Animations::drawPulse(DisplayHandler& display, Color color) {
