@@ -30,6 +30,38 @@ bool setupMDNS() {
     return true;
 }
 
+void listSPIFFSContents() {
+    Serial.println("\n=== SPIFFS Contents ===");
+
+    if(!SPIFFS.begin(true)){
+        Serial.println("SPIFFS Mount Failed");
+        return;
+    }
+
+    File root = SPIFFS.open("/");
+    File file = root.openNextFile();
+
+    while(file){
+        Serial.print("File: ");
+        Serial.print(file.name());
+        Serial.print("\tSize: ");
+        Serial.println(file.size());
+
+        // Optionally, to read file contents:
+        if (file.size() < 1024) {  // Only read small files
+            Serial.println("Contents:");
+            while(file.available()){
+                Serial.write(file.read());
+            }
+            Serial.println("\n---");
+        }
+
+        file = root.openNextFile();
+    }
+
+    Serial.println("=== End SPIFFS ===\n");
+}
+
 bool tryWiFiConnection(int maxAttempts = 3) {
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
         Serial.printf("\nWiFi connection attempt %d of %d\n", attempt, maxAttempts);
@@ -59,6 +91,7 @@ bool tryWiFiConnection(int maxAttempts = 3) {
 }
 
 void startSetupMode() {
+    delay(5000);
     Serial.println("Entering setup mode");
     inSetupMode = true;
 
@@ -118,6 +151,9 @@ void startNormalMode() {
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
+
+    listSPIFFSContents();
+    delay(2000);
 
     if (!SPIFFS.begin(true)) {
         Serial.println("SPIFFS Mount Failed");
