@@ -198,11 +198,10 @@ void OAuthHandler::handleTokenRequest(WebServer* server) {
 }
 
 bool OAuthHandler::hasStoredToken() {
-    Preferences prefs;
-    prefs.begin("oauth", true); // Read-only mode
-    bool hasToken = prefs.isKey("refresh_token");
-    String token = prefs.getString("refresh_token", "");
-    prefs.end();
+    preferences.begin("oauth", true); // Read-only mode
+    bool hasToken = preferences.isKey("refresh_token");
+    String token = preferences.getString("refresh_token", "");
+    preferences.end();
 
     Serial.print("Checking stored token - exists: ");
     Serial.print(hasToken ? "YES" : "NO");
