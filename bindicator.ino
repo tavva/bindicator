@@ -12,6 +12,7 @@
 #include "tasks.h"
 #include "setup_server.h"
 #include "animations.h"
+#include "config_manager.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 CalendarHandler calendar(oauth, GOOGLE_CALENDAR_ID);
@@ -30,44 +31,13 @@ bool setupMDNS() {
     return true;
 }
 
-void listSPIFFSContents() {
-    Serial.println("\n=== SPIFFS Contents ===");
-
-    if(!SPIFFS.begin(true)){
-        Serial.println("SPIFFS Mount Failed");
-        return;
-    }
-
-    File root = SPIFFS.open("/");
-    File file = root.openNextFile();
-
-    while(file){
-        Serial.print("File: ");
-        Serial.print(file.name());
-        Serial.print("\tSize: ");
-        Serial.println(file.size());
-
-        // Optionally, to read file contents:
-        if (file.size() < 1024) {  // Only read small files
-            Serial.println("Contents:");
-            while(file.available()){
-                Serial.write(file.read());
-            }
-            Serial.println("\n---");
-        }
-
-        file = root.openNextFile();
-    }
-
-    Serial.println("=== End SPIFFS ===\n");
-}
-
 bool tryWiFiConnection(int maxAttempts = 3) {
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
         Serial.printf("\nWiFi connection attempt %d of %d\n", attempt, maxAttempts);
 
         WiFi.setHostname("bindicator");
-        WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
+        WiFi.begin(ConfigManager::getWifiSSID().c_str(),
+                  ConfigManager::getWifiPassword().c_str());
 
         int waitCount = 0;
         while (WiFi.status() != WL_CONNECTED && waitCount < 20) {
@@ -151,15 +121,9 @@ void startNormalMode() {
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting up...");
-
-    listSPIFFSContents();
     delay(2000);
 
-    if (!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS Mount Failed");
-        return;
-    }
-    Serial.println("SPIFFS Mounted Successfully");
+    ConfigManager::begin();
 
     display.begin();
 

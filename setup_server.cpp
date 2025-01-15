@@ -1,7 +1,5 @@
 #include "setup_server.h"
 
-const char* SetupServer::CONFIG_FILE = "/config.json";
-
 SetupServer::SetupServer(OAuthHandler& oauth)
     : oauthHandler(oauth), server(nullptr) {
 }
@@ -17,7 +15,8 @@ void SetupServer::begin() {
         server = new WebServer(80);
     }
 
-    loadConfig();
+    config.wifi_ssid = ConfigManager::getWifiSSID();
+    config.wifi_password = ConfigManager::getWifiPassword();
 
     server->on("/", HTTP_GET, std::bind(&SetupServer::handleRoot, this));
     server->on("/save", HTTP_POST, std::bind(&SetupServer::handleSave, this));
@@ -36,75 +35,12 @@ void SetupServer::handleClient() {
     server->handleClient();
 }
 
-bool SetupServer::isConfigured() {
-    return loadConfig() && !config.wifi_ssid.isEmpty();
-}
-
-bool SetupServer::loadConfig() {
-    if (!SPIFFS.exists(CONFIG_FILE)) {
-        return false;
-    }
-
-    File file = SPIFFS.open(CONFIG_FILE, "r");
-    if(!file) {
-        Serial.println("Can't open config file");
-        return false;
-    }
-
-    StaticJsonDocument<512> doc;
-    DeserializationError error = deserializeJson(doc, file);
-    file.close();
-
-    if(error) {
-        Serial.println("error: " + String(error.c_str()));
-        Serial.println("Failed to parse config file");
-        return false;
-    }
-
-    config.wifi_ssid = doc["wifi_ssid"].as<String>();
-    config.wifi_password = doc["wifi_password"].as<String>();
-
-    Serial.println("Configuration loaded:");
-    Serial.println("SSID: " + config.wifi_ssid);
-
-    return !config.wifi_ssid.isEmpty();
-}
-
-bool SetupServer::saveConfig() {
-    Serial.println("Saving configuration...");
-    Serial.println("SSID: " + config.wifi_ssid);
-
-    StaticJsonDocument<512> doc;
-    doc["wifi_ssid"] = config.wifi_ssid;
-    doc["wifi_password"] = config.wifi_password;
-
-    File file = SPIFFS.open(CONFIG_FILE, "w");
-    if(!file) {
-        Serial.println("Failed to create config file");
-        return false;
-    }
-
-    if(serializeJson(doc, file) == 0) {
-        Serial.println("Failed to write config file");
-        file.close();
-        return false;
-    }
-
-    file.close();
-    Serial.println("Configuration saved successfully");
-    return true;
-}
-
-void SetupServer::handleRoot() {
-    server->send(200, "text/html", getSetupPage());
-}
-
 void SetupServer::handleSave() {
     if (server->hasArg("ssid") && server->hasArg("password")) {
         config.wifi_ssid = server->arg("ssid");
         config.wifi_password = server->arg("password");
 
-        if (saveConfig()) {
+        if (ConfigManager::setWifiCredentials(config.wifi_ssid, config.wifi_password)) {
             String html = R"html(
 <!DOCTYPE html>
 <html>
@@ -147,6 +83,10 @@ void SetupServer::handleSave() {
     } else {
         server->send(400, "text/plain", "Missing parameters");
     }
+}
+
+void SetupServer::handleRoot() {
+    server->send(200, "text/html", getSetupPage());
 }
 
 const char* SetupServer::getSetupPage() {
@@ -245,4 +185,8 @@ void SetupServer::handleOAuth() {
     } else {
         server->send(400, "text/plain", "No auth code provided");
     }
+}
+
+bool SetupServer::isConfigured() {
+    return ConfigManager::isConfigured();
 }

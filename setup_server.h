@@ -2,9 +2,9 @@
 #define SETUP_SERVER_H
 
 #include <WebServer.h>
-#include <SPIFFS.h>
 #include <ArduinoJson.h>
 #include "oauth_handler.h"
+#include "config_manager.h"
 
 class SetupServer {
     public:
@@ -14,9 +14,6 @@ class SetupServer {
         void handleClient();
         bool isConfigured();
         WebServer* server;
-
-        String getWifiSSID() { return config.wifi_ssid; }
-        String getWifiPassword() { return config.wifi_password; }
 
     private:
         OAuthHandler& oauthHandler;
@@ -30,13 +27,7 @@ class SetupServer {
         void handleRoot();
         void handleSave();
         void handleOAuth();
-
-        bool loadConfig();
-        bool saveConfig();
-
         const char* getSetupPage();
-
-        static const char* CONFIG_FILE;
 };
 
 #endif
