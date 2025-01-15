@@ -21,9 +21,8 @@ void animationTask(void* parameter) {
     static bool isLoading = true;
     static bool isError = false;
     static int loadingPos = 0;
-    static int x = 0;
-    static uint8_t r = 0, g = 0, b = 30;
-    static uint8_t dot_r = 0, dot_g = 0, dot_b = 0;
+    static Color color(0, 0, 30);
+    static Color dotColor;
     static int animationCounter = 0;
     const int ANIMATION_SPEED = 4;
 
@@ -39,15 +38,15 @@ void animationTask(void* parameter) {
             switch(cmd) {
                 case CMD_SHOW_RECYCLING:
                     Serial.println("Switching to green (recycling)");
-                    r = 0; g = 50; b = 0;
+                    color = Color(0, 50, 0);
                     break;
                 case CMD_SHOW_RUBBISH:
                     Serial.println("Switching to brown (rubbish)");
-                    r = 20; g = 40; b = 0;
+                    color = Color(20, 40, 0);
                     break;
                 case CMD_SHOW_NEITHER:
                     Serial.println("Switching to blue (neither)");
-                    r = 0; g = 0; b = 50;
+                    color = Color(0, 0, 50);
                     break;
                 case CMD_SHOW_LOADING:
                     Serial.println("Showing loading animation");
@@ -56,20 +55,20 @@ void animationTask(void* parameter) {
                 case CMD_SHOW_ERROR_API:
                     Serial.println("Showing API error");
                     isError = true;
-                    r = 50; g = 0; b = 0;
-                    dot_r = 0; dot_g = 0; dot_b = 50;
+                    color = Color(50, 0, 0);
+                    dotColor = Color(0, 0, 50);
                     break;
                 case CMD_SHOW_ERROR_WIFI:
                     Serial.println("Showing WiFi error");
                     isError = true;
-                    r = 50; g = 0; b = 0;
-                    dot_r = 50; dot_g = 50; dot_b = 0;  // yellow
+                    color = Color(50, 0, 0);
+                    dotColor = Color(50, 50, 0);  // yellow
                     break;
                 case CMD_SHOW_ERROR_OTHER:
                     Serial.println("Showing other error");
                     isError = true;
-                    r = 50; g = 0; b = 0;
-                    dot_r = 50; dot_g = 0; dot_b = 50;  // purple
+                    color = Color(50, 0, 0);
+                    dotColor = Color(50, 0, 50);  // purple
                     break;
                 default:
                     Serial.printf("Unknown command: %d\n", cmd);
@@ -79,11 +78,8 @@ void animationTask(void* parameter) {
 
         display.matrix.clear();
 
-        uint8_t brightness = (x < 32) ? x * 2 : (64 - x) * 2;
-        x = (x + 1) % 64;
-
         if (isError) {
-            Animations::drawError(display, r, g, b, dot_r, dot_g, dot_b, brightness);
+            Animations::drawError(display, color, dotColor);
         } else if (isLoading) {
             Animations::drawLoading(display, loadingPos);
             animationCounter++;
@@ -92,7 +88,7 @@ void animationTask(void* parameter) {
                 loadingPos = (loadingPos + 1) % 24;
             }
         } else {
-            Animations::drawPulse(display, r, g, b, brightness);
+            Animations::drawPulse(display, color);
         }
 
         display.matrix.show();

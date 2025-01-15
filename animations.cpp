@@ -11,29 +11,35 @@ const uint8_t Animations::exclamation[8][8] = {
     {0,0,0,0,0,0,0,0}
 };
 
-void Animations::drawError(DisplayHandler& display, uint8_t r, uint8_t g, uint8_t b,
-                         uint8_t dot_r, uint8_t dot_g, uint8_t dot_b, uint8_t brightness) {
+int Animations::brightnessTick = 0;
+
+uint8_t Animations::calculateBrightness() {
+    uint8_t brightness = (brightnessTick < 32) ? brightnessTick * 2 : (64 - brightnessTick) * 2;
+    brightnessTick = (brightnessTick + 1) % 64;
+    return brightness;
+}
+
+void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
+    uint8_t brightness = calculateBrightness();
+
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            int value = exclamation[row][col];
-            if (value > 0) {
-                if (value == 1) {  // stroke
-                    display.matrix.setPixelColor(row * 8 + col,
-                        display.matrix.Color(
-                            (r * brightness) / 64,
-                            (g * brightness) / 64,
-                            (b * brightness) / 64
-                        )
-                    );
-                } else if (value == 2) {  // dot
-                    display.matrix.setPixelColor(row * 8 + col,
-                        display.matrix.Color(
-                            (dot_r * brightness) / 64,
-                            (dot_g * brightness) / 64,
-                            (dot_b * brightness) / 64
-                        )
-                    );
-                }
+            if (exclamation[row][col] == 1) {  // stroke
+                display.matrix.setPixelColor(row * 8 + col,
+                    display.matrix.Color(
+                        (stroke.r * brightness) / 64,
+                        (stroke.g * brightness) / 64,
+                        (stroke.b * brightness) / 64
+                    )
+                );
+            } else if (exclamation[row][col] == 2) {  // dot
+                display.matrix.setPixelColor(row * 8 + col,
+                    display.matrix.Color(
+                        (dot.r * brightness) / 64,
+                        (dot.g * brightness) / 64,
+                        (dot.b * brightness) / 64
+                    )
+                );
             }
         }
     }
@@ -76,16 +82,17 @@ void Animations::drawLoading(DisplayHandler& display, int loadingPos) {
     display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(30, 30, 30));
 }
 
-void Animations::drawPulse(DisplayHandler& display, uint8_t r, uint8_t g, uint8_t b,
-                         uint8_t brightness) {
+void Animations::drawPulse(DisplayHandler& display, Color color) {
+    uint8_t brightness = calculateBrightness();
+
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             if(Matrix_Data[row][col] == 1) {
                 display.matrix.setPixelColor(row * 8 + col,
                     display.matrix.Color(
-                        (r * brightness) / 64,
-                        (g * brightness) / 64,
-                        (b * brightness) / 64
+                        (color.r * brightness) / 64,
+                        (color.g * brightness) / 64,
+                        (color.b * brightness) / 64
                     )
                 );
             }
