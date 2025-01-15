@@ -92,22 +92,24 @@ bool tryWiFiConnection(int maxAttempts = 3) {
 void startNormalMode() {
     commandQueue = xQueueCreate(10, sizeof(Command));
 
-    xTaskCreate(
+    xTaskCreatePinnedToCore(
         animationTask,
         "AnimationTask",
         8192,
         NULL,
-        1,
-        NULL
+        2,
+        NULL,
+        1
     );
 
-    xTaskCreate(
+    xTaskCreatePinnedToCore(
         calendarTask,
         "CalendarTask",
         8192,
         NULL,
         1,
-        NULL
+        NULL,
+        0
     );
 }
 
@@ -148,6 +150,6 @@ void loop() {
             ESP.restart(); // to enter normal operation mode
         }
 
-        delay(10);
+        yield();
     }
 }
