@@ -97,6 +97,13 @@ void startSetupMode() {
 }
 
 void startNormalMode() {
+    if (!tryWiFiConnection()) {
+        Serial.println("Failed to connect to WiFi");
+        Command cmd = CMD_SHOW_ERROR_WIFI;
+        xQueueSend(commandQueue, &cmd, 0);
+        return;
+    }
+
     xTaskCreatePinnedToCore(
         calendarTask,
         "CalendarTask",
