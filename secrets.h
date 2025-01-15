@@ -6,9 +6,11 @@
 extern const char* WIFI_SSID;
 extern const char* WIFI_PASSWORD;
 
-extern const String CLIENT_ID;
-extern const String CLIENT_SECRET;
-extern const String REFRESH_TOKEN;
-extern const String CALENDAR_ID;
+extern const String GOOGLE_CLIENT_ID;
+extern const String GOOGLE_CLIENT_SECRET;
+extern const String GOOGLE_CALENDAR_ID;
+extern const String GOOGLE_REDIRECT_URI;
+
+extern const String AP_PASSWORD;
 
 #endif

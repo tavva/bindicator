@@ -124,15 +124,13 @@ void Animations::drawPulse(DisplayHandler& display, Color color) {
 
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            if(Matrix_Data[row][col] == 1) {
-                display.matrix.setPixelColor(row * 8 + col,
-                    display.matrix.Color(
-                        (color.r * brightness) / 64,
-                        (color.g * brightness) / 64,
-                        (color.b * brightness) / 64
-                    )
-                );
-            }
+            display.matrix.setPixelColor(row * 8 + col,
+                display.matrix.Color(
+                    (color.r * brightness) / 64,
+                    (color.g * brightness) / 64,
+                    (color.b * brightness) / 64
+                )
+            );
         }
     }
 }

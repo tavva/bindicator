@@ -15,7 +15,7 @@ class CalendarHandler {
     private:
         OAuthHandler& oauth;
         String access_token;
-        const String CALENDAR_ID;
+        const String GOOGLE_CALENDAR_ID;
         const String CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/calendars/";
 
         String getISODate();

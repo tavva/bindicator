@@ -1,6 +1,5 @@
 #include "tasks.h"
 #include "display_handler.h"
-#include "wifi_config.h"
 #include "secrets.h"
 #include "calendar_handler.h"
 #include "time_manager.h"
@@ -84,28 +83,6 @@ void animationTask(void* parameter) {
     }
 }
 
-void wifiTask(void* parameter) {
-    while(true) {
-        if (WiFi.status() != WL_CONNECTED) {
-            Serial.println("WiFi disconnected, attempting to reconnect...");
-            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-            Command cmd = CMD_WIFI_DISCONNECTED;
-            xQueueSend(commandQueue, &cmd, 0);
-
-            while (WiFi.status() != WL_CONNECTED) {
-                vTaskDelay(pdMS_TO_TICKS(500));
-            }
-
-            Serial.println("WiFi connected!");
-            cmd = CMD_WIFI_CONNECTED;
-            xQueueSend(commandQueue, &cmd, 0);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    }
-}
-
 void calendarTask(void* parameter) {
     extern CalendarHandler calendar;
 
@@ -134,10 +111,7 @@ void calendarTask(void* parameter) {
             if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
                 Command cmd;
 
-                if (hasRecycling && hasRubbish) {
-                    Serial.println("Both bins!");
-                    cmd = CMD_SHOW_RECYCLING;
-                } else if (hasRecycling) {
+                if (hasRecycling) {
                     Serial.println("Recycling only");
                     cmd = CMD_SHOW_RECYCLING;
                 } else if (hasRubbish) {
@@ -156,6 +130,8 @@ void calendarTask(void* parameter) {
             }
         } else {
             Serial.println("WiFi not connected, skipping calendar check");
+            Command cmd = CMD_SHOW_ERROR_WIFI;
+            xQueueSend(commandQueue, &cmd, 0);
         }
 
         vTaskDelay(pdMS_TO_TICKS(3600000));

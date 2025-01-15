@@ -2,7 +2,7 @@
 #include "calendar_handler.h"
 
 CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler, const String& calendarId)
-    : oauth(oauthHandler), CALENDAR_ID(calendarId) {}
+    : oauth(oauthHandler), GOOGLE_CALENDAR_ID(calendarId) {}
 
 bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     String today = getISODate();
@@ -26,7 +26,7 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     }
 
     HTTPClient http;
-    String url = CALENDAR_API_BASE + CALENDAR_ID + "/events";
+    String url = CALENDAR_API_BASE + GOOGLE_CALENDAR_ID + "/events";
     url += "?timeMin=" + urlEncode(timeMin);
     url += "&timeMax=" + urlEncode(timeMax);
     url += "&singleEvents=true";

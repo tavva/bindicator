@@ -4,19 +4,21 @@
 #include <WebServer.h>
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
+#include "oauth_handler.h"
 
 class SetupServer {
     public:
-        SetupServer();
+        SetupServer(OAuthHandler& oauth);
         void begin();
         void handleClient();
         bool isConfigured();
+        WebServer server;
 
         String getWifiSSID() { return config.wifi_ssid; }
         String getWifiPassword() { return config.wifi_password; }
 
     private:
-        WebServer server;
+        OAuthHandler& oauthHandler;
 
         struct Config {
             String wifi_ssid;
@@ -26,6 +28,7 @@ class SetupServer {
 
         void handleRoot();
         void handleSave();
+        void handleOAuth();
 
         bool loadConfig();
         bool saveConfig();

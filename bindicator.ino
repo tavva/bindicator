@@ -2,7 +2,8 @@
 #include <freertos/task.h>
 #include <freertos/queue.h>
 #include <WiFi.h>
-#include "wifi_config.h"
+#include <ESPmDNS.h>
+#include <WebServer.h>
 #include "time_manager.h"
 #include "oauth_handler.h"
 #include "calendar_handler.h"
@@ -11,23 +12,54 @@
 #include "tasks.h"
 #include "setup_server.h"
 
-OAuthHandler oauth(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN);
-CalendarHandler calendar(oauth, CALENDAR_ID);
+OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+CalendarHandler calendar(oauth, GOOGLE_CALENDAR_ID);
 DisplayHandler display;
 bool hasRecycling, hasRubbish;
-SetupServer setupServer;
+SetupServer setupServer(oauth);
 bool inSetupMode = false;
+
+bool setupMDNS() {
+    if (!MDNS.begin("bindicator")) {
+        Serial.println("Error setting up MDNS responder!");
+        return false;
+    }
+    MDNS.addService("http", "tcp", 80);
+    Serial.println("mDNS responder started at bindicator.local");
+    return true;
+}
 
 void startSetupMode() {
     Serial.println("Entering setup mode");
     inSetupMode = true;
 
-    WiFi.softAP("Bindicator Setup", "bindicator123");
-    Serial.println("Access Point Started");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.softAPIP());
+    WiFi.mode(WIFI_AP_STA);
+    Serial.println("WiFi mode set to AP+STA");
+    delay(100);
+
+    // default IP is 192.168.4.1
+    if (!WiFi.softAP("Bindicator Setup", AP_PASSWORD)) {
+        Serial.println("AP Start Failed");
+        return;
+    }
+
+    if (setupServer.isConfigured()) {
+        Serial.println("Connecting to main network...");
+        if (tryWiFiConnection()) {
+            Serial.println("\nConnected to main network");
+            Serial.print("Station IP Address: ");
+            Serial.println(WiFi.localIP());
+        }
+    }
+
+    if (!setupMDNS()) {
+        Serial.println("mDNS setup failed");
+    }
 
     setupServer.begin();
+    Serial.println("Web server started");
+    oauth.begin(setupServer.server);
+    Serial.println("OAuth handler initialized");
 }
 
 bool tryWiFiConnection(int maxAttempts = 3) {
@@ -36,88 +68,34 @@ bool tryWiFiConnection(int maxAttempts = 3) {
 
         WiFi.begin(setupServer.getWifiSSID().c_str(), setupServer.getWifiPassword().c_str());
 
-        int checks = 0;
-        while (WiFi.status() != WL_CONNECTED && checks < 20) {
+        int waitCount = 0;
+        while (WiFi.status() != WL_CONNECTED && waitCount < 20) {
             delay(500);
             Serial.print(".");
-            checks++;
+            waitCount++;
         }
-        Serial.println();
 
         if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("WiFi connected!");
-            Serial.print("IP address: ");
+            Serial.println("\nWiFi connected!");
+            Serial.println("IP address: ");
             Serial.println(WiFi.localIP());
             return true;
         }
 
-        Serial.println("Connection attempt failed");
-        WiFi.disconnect(true);
+        Serial.println("\nWiFi connection failed");
+        WiFi.disconnect();
         delay(1000);
     }
-
-    Serial.printf("Failed to connect to WiFi after %d attempts\n", maxAttempts);
     return false;
 }
 
-void setup() {
-    Serial.begin(115200);
-    Serial.println("Starting up...");
-
-    if(!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS Mount Failed");
-        return;
-    }
-    Serial.println("SPIFFS Mounted successfully");
-
-    if (!setupServer.isConfigured()) {
-        Serial.println("No configuration found");
-        startSetupMode();
-    } else {
-        Serial.println("Configuration found, starting normal operation");
-
-        if (tryWiFiConnection(3)) {
-            startNormalOperation();
-        } else {
-            Serial.println("Failed to establish WiFi connection");
-            startSetupMode();
-        }
-    }
-}
-
-void loop() {
-    if (inSetupMode) {
-        setupServer.handleClient();
-        // Feed the watchdog timer and allow other tasks to run
-        delay(10);
-    } else {
-        // When not in setup mode, delete the loop task
-        // as all our work is handled by FreeRTOS tasks
-        vTaskDelete(NULL);
-    }
-}
-
-void startNormalOperation() {
-    display.begin();
-    display.matrix.clear();
-    display.matrix.setBrightness(50);
-    memset(Matrix_Data, 1, sizeof(Matrix_Data));
-
+void startNormalMode() {
     commandQueue = xQueueCreate(10, sizeof(Command));
 
     xTaskCreate(
         animationTask,
-        "Animation",
-        10000,
-        NULL,
-        3,
-        NULL
-    );
-
-    xTaskCreate(
-        wifiTask,
-        "WiFi",
-        10000,
+        "AnimationTask",
+        8192,
         NULL,
         1,
         NULL
@@ -125,12 +103,51 @@ void startNormalOperation() {
 
     xTaskCreate(
         calendarTask,
-        "Calendar",
-        10000,
+        "CalendarTask",
+        8192,
         NULL,
         1,
         NULL
     );
+}
 
-    Serial.println("Tasks created");
+void setup() {
+    Serial.begin(115200);
+    Serial.println("Starting up...");
+
+    if (!SPIFFS.begin(true)) {
+        Serial.println("SPIFFS Mount Failed");
+        return;
+    }
+    Serial.println("SPIFFS Mounted Successfully");
+
+    display.begin();
+
+    WiFi.mode(WIFI_STA);
+    delay(500);
+
+    setupServer.begin();
+    delay(100);
+
+    oauth.begin(setupServer.server);
+
+    if (!setupServer.isConfigured() || !oauth.isAuthorized()) {
+        startSetupMode();
+    } else {
+        startNormalMode();
+    }
+}
+
+void loop() {
+    if (inSetupMode) {
+        setupServer.handleClient();
+
+        if (setupServer.isConfigured() && oauth.isAuthorized()) {
+            Serial.println("Setup complete, restarting...");
+            delay(1000);
+            ESP.restart(); // to enter normal operation mode
+        }
+
+        delay(10);
+    }
 }
