@@ -151,11 +151,6 @@ void OAuthHandler::saveRefreshToken(const String& token) {
 }
 
 String OAuthHandler::loadRefreshToken() {
-    if (!prefsInitialized) {
-        Serial.println("ERROR: Preferences not initialized!");
-        return "";
-    }
-
     String token = preferences.getString("refresh_token", "");
     Serial.print("Loaded refresh token from preferences: ");
     Serial.println(token.isEmpty() ? "EMPTY" : token);
