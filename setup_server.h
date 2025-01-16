@@ -29,6 +29,7 @@ class SetupServer {
         void handleOAuth();
         const char* getSetupPage();
         void handleRestart();
+        void handleFactoryReset();
 };
 
 #endif

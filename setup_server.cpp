@@ -27,6 +27,7 @@ void SetupServer::begin() {
     });
     server->on("/oauth_callback", HTTP_GET, std::bind(&SetupServer::handleOAuth, this));
     server->on("/restart", HTTP_POST, [this]() { handleRestart(); });
+    server->on("/factory-reset", HTTP_POST, [this]() { handleFactoryReset(); });
 
     server->begin();
     Serial.println("Setup server started");
@@ -164,7 +165,10 @@ const char* SetupServer::getSetupPage() {
 
     <div class="setup-section">
         <h2>Device Control</h2>
-        <button onclick="restartDevice()" style="background-color: #ff4444;">Restart Device</button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="restartDevice()" style="background-color: #ff4444;">Restart Device</button>
+            <button onclick="factoryReset()" style="background-color: #ff4444;">Factory Reset</button>
+        </div>
     </div>
 
     <div class="status">
@@ -178,6 +182,14 @@ const char* SetupServer::getSetupPage() {
             if (confirm('Are you sure you want to restart the device?')) {
                 fetch('/restart', { method: 'POST' })
                     .then(() => alert('Device is restarting...'))
+                    .catch(err => alert('Error: ' + err));
+            }
+        }
+
+        function factoryReset() {
+            if (confirm('WARNING: This will erase all settings and return the device to factory defaults.\n\nAre you sure you want to continue?')) {
+                fetch('/factory-reset', { method: 'POST' })
+                    .then(() => alert('Device is resetting and will restart...'))
                     .catch(err => alert('Error: ' + err));
             }
         }
@@ -209,6 +221,22 @@ bool SetupServer::isConfigured() {
 
 void SetupServer::handleRestart() {
     server->send(200, "text/plain", "Restarting...");
+    delay(1000);
+    ESP.restart();
+}
+
+void SetupServer::handleFactoryReset() {
+    server->send(200, "text/plain", "Performing factory reset...");
+
+    Preferences prefs;
+    prefs.begin("system", false);
+    prefs.clear();
+    prefs.end();
+
+    prefs.begin("oauth", false);
+    prefs.clear();
+    prefs.end();
+
     delay(1000);
     ESP.restart();
 }
