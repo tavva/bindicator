@@ -7,7 +7,7 @@ OAuthHandler::OAuthHandler(const String& clientId, const String& clientSecret, c
       GOOGLE_REDIRECT_URI(redirectUri) {}
 
 void OAuthHandler::begin(WebServer* server) {
-    prefsInitialized = preferences.begin("oauth", false);
+    preferences.begin("oauth", false);
     refresh_token = loadRefreshToken();
 
     serverAvailable = (server != nullptr);
@@ -143,10 +143,6 @@ bool OAuthHandler::refreshAccessToken() {
 }
 
 void OAuthHandler::saveRefreshToken(const String& token) {
-    if (!prefsInitialized) {
-        Serial.println("Preferences not initialized");
-        return;
-    }
     preferences.putString("refresh_token", token);
 }
 
@@ -196,18 +192,4 @@ void OAuthHandler::handleTokenRequest(WebServer* server) {
     } else {
         server->send(400, "text/plain", "No refresh token provided");
     }
-}
-
-bool OAuthHandler::hasStoredToken() {
-    preferences.begin("oauth", true); // Read-only mode
-    bool hasToken = preferences.isKey("refresh_token");
-    String token = preferences.getString("refresh_token", "");
-    preferences.end();
-
-    Serial.print("Checking stored token - exists: ");
-    Serial.print(hasToken ? "YES" : "NO");
-    Serial.print(", value: ");
-    Serial.println(token);
-
-    return hasToken && !token.isEmpty();
 }

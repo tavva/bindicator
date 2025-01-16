@@ -18,7 +18,7 @@ class OAuthHandler {
         bool isAuthorized();
         bool getValidToken(String& token);
         String getAuthUrl();
-        bool hasStoredToken();
+        String loadRefreshToken();
 
     private:
         const String GOOGLE_CLIENT_ID;
@@ -39,7 +39,6 @@ class OAuthHandler {
         void handleTokenRequest(WebServer* server);
         bool refreshAccessToken();
         void saveRefreshToken(const String& token);
-        String loadRefreshToken();
         String urlEncode(const String& str);
 };
 
