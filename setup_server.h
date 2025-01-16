@@ -12,7 +12,6 @@ class SetupServer {
         ~SetupServer();
         void begin();
         void handleClient();
-        bool isConfigured();
         WebServer* server;
 
     private:

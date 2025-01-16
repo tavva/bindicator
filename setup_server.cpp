@@ -245,10 +245,6 @@ void SetupServer::handleOAuth() {
     }
 }
 
-bool SetupServer::isConfigured() {
-    return ConfigManager::isConfigured();
-}
-
 void SetupServer::handleRestart() {
     server->send(200, "text/plain", "Restarting...");
     delay(1000);

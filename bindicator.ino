@@ -77,7 +77,7 @@ void startSetupMode() {
         return;
     }
 
-    if (setupServer.isConfigured()) {
+    if (ConfigManager::isConfigured()) {
         Serial.println("Connecting to main network...");
         if (tryWiFiConnection()) {
             Serial.println("\nConnected to main network");
@@ -147,7 +147,7 @@ void setup() {
         return;
     }
 
-    if (!setupServer.isConfigured() || oauth.loadRefreshToken().isEmpty()) {
+    if (!ConfigManager::isConfigured() || oauth.loadRefreshToken().isEmpty()) {
         Serial.println("No valid configuration found - entering setup mode");
         startSetupMode();
     } else {
