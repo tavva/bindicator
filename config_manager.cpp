@@ -6,6 +6,7 @@ const char* ConfigManager::PREF_NAMESPACE = "system";
 const char* ConfigManager::KEY_WIFI_SSID = "wifi_ssid";
 const char* ConfigManager::KEY_WIFI_PASS = "wifi_pass";
 const char* ConfigManager::KEY_FORCED_SETUP = "force_setup";
+const char* ConfigManager::KEY_CALENDAR_ID = "calendar_id";
 
 void ConfigManager::begin() {
     if (!prefsInitialized) {
@@ -62,4 +63,14 @@ void ConfigManager::processSetupFlag() {
     } else if (flag == "in-setup-mode") {
         preferences.remove(KEY_FORCED_SETUP);
     }
+}
+
+String ConfigManager::getCalendarId() {
+    begin();
+    return preferences.getString(KEY_CALENDAR_ID, "primary");
+}
+
+bool ConfigManager::setCalendarId(const String& id) {
+    begin();
+    return preferences.putString(KEY_CALENDAR_ID, id);
 }

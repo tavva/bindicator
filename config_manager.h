@@ -17,11 +17,15 @@ class ConfigManager {
         static void setForcedSetupFlag(const String& flag);
         static void processSetupFlag();
 
+        static String getCalendarId();
+        static bool setCalendarId(const String& id);
+
     private:
         static const char* PREF_NAMESPACE;
         static const char* KEY_WIFI_SSID;
         static const char* KEY_WIFI_PASS;
         static const char* KEY_FORCED_SETUP;
+        static const char* KEY_CALENDAR_ID;
 
         static Preferences preferences;
         static bool prefsInitialized;
