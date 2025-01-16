@@ -131,6 +131,10 @@ const char* SetupServer::getSetupPage() {
                 ".status-complete { color: #4CAF50; }"
                 ".status-incomplete { color: #f44336; }"
                 ".help-text { font-size: 0.9em; color: #888; margin-top: 5px; }"
+                ".setup-complete { margin: 40px 0; padding: 30px; border: 2px solid #4CAF50; border-radius: 10px; background-color: #252525; text-align: center; }"
+                ".setup-complete h2 { display: block }"
+                ".launch-button { background-color: #4CAF50; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; margin-top: 20px; }"
+                ".launch-button:hover { background-color: #45a049; }"
             "</style>"
         "</head>"
         "<body>"
@@ -161,6 +165,15 @@ const char* SetupServer::getSetupPage() {
             oauthContent +
             "<p class='status'>Status: " + oauthStatus + "</p>"
             "</div>";
+
+    // Setup complete
+    if (!String(config.wifi_ssid).isEmpty() && !String(config.wifi_password).isEmpty() && oauthHandler.isAuthorized()) {
+        page += "<div id='setupComplete' class='setup-complete'>"
+                "<h2>Your Bindicator is Ready!</h2>"
+                "<p>Setup is complete and your Bindicator is configured.</p>"
+                "<button class='launch-button' onclick='restartDevice()'>Launch Bindicator</button>"
+                "</div>";
+    }
 
     // Calendar Section
     page += "<div class='setup-section" +
