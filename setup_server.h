@@ -13,6 +13,7 @@ class SetupServer {
         void begin();
         void handleClient();
         WebServer* server;
+        void handleCalendarList();
 
     private:
         OAuthHandler& oauthHandler;

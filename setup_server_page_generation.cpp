@@ -23,11 +23,9 @@ const char* SetupServer::getSetupPage() {
         "<span class='status-complete'>Connected</span>" :
         "<span class='status-incomplete'>Not Connected</span>";
 
-    String calendarStatus = "<span class='status-complete'>Configured (" +
-        (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
-        ")</span>";
+    String calendarStatus = "<span class='status-complete' id='calendar-status'>Loading calendar name...</span>";
 
-    page = F(
+    page =
         "<!DOCTYPE html>"
         "<html>"
         "<head>"
@@ -58,7 +56,7 @@ const char* SetupServer::getSetupPage() {
             "</style>"
         "</head>"
         "<body>"
-            "<h1>Bindicator Setup</h1>");
+            "<h1>Bindicator Setup</h1>";
 
     // WiFi Section
     page += "<div class='setup-section" + sectionClass + "'>"
@@ -96,39 +94,14 @@ const char* SetupServer::getSetupPage() {
     }
 
     // Calendar Section
-    String calendarOptions;
-    if (oauthHandler.isAuthorized()) {
-        StaticJsonDocument<4096> calendars;
-        CalendarHandler calendarHandler(oauthHandler);
-
-        if (calendarHandler.getAvailableCalendars(calendars)) {
-            String currentCalendarId = ConfigManager::getCalendarId();
-
-            calendarOptions = "<select id='calendar_id' name='calendar_id'>";
-            calendarOptions += "<option value='primary'" +
-                String(currentCalendarId == "primary" ? " selected" : "") +
-                ">Main Calendar</option>";
-
-            JsonArray items = calendars["items"];
-            for (JsonVariant item : items) {
-                String id = item["id"].as<String>();
-                String summary = item["summary"].as<String>();
-
-                if (id != "primary") {  // Skip primary as we already added it
-                    calendarOptions += "<option value='" + id + "'" +
-                        String(currentCalendarId == id ? " selected" : "") +
-                        ">" + summary + "</option>";
-                }
-            }
-            calendarOptions += "</select>";
-        } else {
-            calendarOptions = "<input type='text' id='calendar_id' name='calendar_id' value='" +
-                ConfigManager::getCalendarId() + "'>";
-        }
-    } else {
-        calendarOptions = "<input type='text' id='calendar_id' name='calendar_id' value='" +
-            ConfigManager::getCalendarId() + "' disabled>";
-    }
+    String calendarOptions = "<div id='calendar-select-container'>"
+        "<select id='calendar_id' name='calendar_id' style='display:none;'>"
+            "<option value='" + ConfigManager::getCalendarId() + "' selected>" +
+            (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
+            "</option>"
+        "</select>"
+        "<div id='calendar-loading'>Loading calendars...</div>"
+        "</div>";
 
     page += "<div class='setup-section" +
             String(!oauthHandler.isAuthorized() ? " disabled" : " complete") + "'>" +
@@ -145,14 +118,15 @@ const char* SetupServer::getSetupPage() {
             "</div>";
 
     // Device Control Section
-    page += F("<div class='setup-section'>"
+    page += "<div class='setup-section'>"
             "<h2 style='color: #ff4444;'>Device Control</h2>"
             "<div style='display: flex; gap: 10px;'>"
                 "<button onclick='restartDevice()' style='background-color: #ff4444;'>Restart Device</button>"
                 "<button onclick='factoryReset()' style='background-color: #ff4444;'>Factory Reset</button>"
             "</div>"
-            "</div>"
-            "<script>"
+            "</div>";
+
+    page += "<script>"
                 "function restartDevice() {"
                     "if (confirm('Are you sure you want to restart the device?')) {"
                         "fetch('/restart', { method: 'POST' })"
@@ -168,8 +142,47 @@ const char* SetupServer::getSetupPage() {
                     "}"
                 "}"
             "</script>"
+            "<script>"
+                "if (document.querySelector('#calendar-select-container')) {"
+                    "fetch('/calendars')"
+                        ".then(response => response.json())"
+                        ".then(data => {"
+                            "const select = document.querySelector('#calendar_id');"
+                            "select.innerHTML = '';" // Clear existing options
+                            "const currentId = '" + ConfigManager::getCalendarId() + "';"
+
+                            "const primaryOption = document.createElement('option');"
+                            "primaryOption.value = 'primary';"
+                            "primaryOption.text = 'Main Calendar';"
+                            "primaryOption.selected = currentId === 'primary';"
+                            "select.appendChild(primaryOption);"
+
+                            "data.items.forEach(cal => {"
+                                "if (cal.id !== 'primary') {"
+                                    "const option = document.createElement('option');"
+                                    "option.value = cal.id;"
+                                    "option.text = cal.summary;"
+                                    "option.selected = cal.id === currentId;"
+                                    "select.appendChild(option);"
+                                "}"
+                            "});"
+
+                            "const statusElement = document.querySelector('#calendar-status');"
+                            "const selectedCalendar = data.items.find(cal => cal.id === currentId) || "
+                                "{summary: currentId === 'primary' ? 'Main Calendar' : 'Unknown Calendar'};"
+                            "statusElement.textContent = 'Configured (' + selectedCalendar.summary + ')';"
+
+                            "document.querySelector('#calendar-loading').style.display = 'none';"
+                            "select.style.display = 'block';"
+                        "})"
+                        ".catch(error => {"
+                            "document.querySelector('#calendar-loading').textContent = 'Error loading calendars';"
+                            "console.error('Error:', error);"
+                        "});"
+                "}"
+            "</script>"
         "</body>"
-        "</html>");
+        "</html>";
 
     return page.c_str();
 }

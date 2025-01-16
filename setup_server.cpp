@@ -1,5 +1,7 @@
 #include "setup_server.h"
 #include <WiFi.h>
+#include "config_manager.h"
+#include "calendar_handler.h"
 
 SetupServer::SetupServer(OAuthHandler& oauth)
     : oauthHandler(oauth), server(nullptr) {
@@ -30,6 +32,7 @@ void SetupServer::begin() {
     server->on("/restart", HTTP_POST, [this]() { handleRestart(); });
     server->on("/factory-reset", HTTP_POST, [this]() { handleFactoryReset(); });
     server->on("/save-calendar", HTTP_POST, std::bind(&SetupServer::handleSaveCalendar, this));
+    server->on("/calendars", HTTP_GET, [this]() { this->handleCalendarList(); });
 
     server->begin();
     Serial.println("Setup server started");
@@ -160,5 +163,23 @@ void SetupServer::handleSaveCalendar() {
         }
     } else {
         server->send(400, "text/plain", "Missing calendar ID");
+    }
+}
+
+void SetupServer::handleCalendarList() {
+    if (!oauthHandler.isAuthorized()) {
+        server->send(401, "application/json", "{\"error\":\"Not authorized\"}");
+        return;
+    }
+
+    StaticJsonDocument<4096> calendars;
+    CalendarHandler calendarHandler(oauthHandler);
+
+    if (calendarHandler.getAvailableCalendars(calendars)) {
+        String response;
+        serializeJson(calendars, response);
+        server->send(200, "application/json", response);
+    } else {
+        server->send(500, "application/json", "{\"error\":\"Failed to fetch calendars\"}");
     }
 }
