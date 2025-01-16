@@ -169,7 +169,7 @@ const char* SetupServer::getSetupPage() {
             "</div>";
 
     // Setup complete
-    if (!String(config.wifi_ssid).isEmpty() && !String(config.wifi_password).isEmpty() && oauthHandler.isAuthorized()) {
+    if (!WiFi.status() == WL_CONNECTED && oauthHandler.isAuthorized()) {
         page += "<div id='setupComplete' class='setup-complete'>"
                 "<h2>Your Bindicator is Ready!</h2>"
                 "<p>Setup is complete and your Bindicator is configured.</p>"
