@@ -1,4 +1,5 @@
 #include "setup_server.h"
+#include <WiFi.h>
 
 SetupServer::SetupServer(OAuthHandler& oauth)
     : oauthHandler(oauth), server(nullptr) {
@@ -97,7 +98,8 @@ const char* SetupServer::getSetupPage() {
 
     String wifiStatus = config.wifi_ssid.isEmpty() ?
         "<span class='status-incomplete'>Not Configured</span>" :
-        "<span class='status-complete'>Configured (" + config.wifi_ssid + ")</span>";
+        "<span class='status-complete'>Configured (" + config.wifi_ssid + ")" +
+        (WiFi.status() == WL_CONNECTED ? " - Connected" : " - Not Connected") + "</span>";
 
     String oauthStatus = oauthHandler.isAuthorized() ?
         "<span class='status-complete'>Connected</span>" :
