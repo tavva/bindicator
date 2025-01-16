@@ -117,6 +117,13 @@ const char* SetupServer::getSetupPage() {
             "<p class='status'>Status: " + calendarStatus + "</p>"
             "</div>";
 
+    page += "<div id='upcoming-bins' style='margin-top: 10px; display: none;'>"
+            "<p class='help-text'>Upcoming collections in next 7 days:</p>"
+            "<ul id='upcoming-bins-list' style='color: #888; font-size: 0.9em;'>"
+            "<li>Loading...</li>"
+            "</ul>"
+            "</div>";
+
     // Device Control Section
     page += "<div class='setup-section'>"
             "<h2 style='color: #ff4444;'>Device Control</h2>"
@@ -127,6 +134,7 @@ const char* SetupServer::getSetupPage() {
             "</div>";
 
     page += "<script>"
+                "const currentId = '" + ConfigManager::getCalendarId() + "';"
                 "function restartDevice() {"
                     "if (confirm('Are you sure you want to restart the device?')) {"
                         "fetch('/restart', { method: 'POST' })"
@@ -148,8 +156,7 @@ const char* SetupServer::getSetupPage() {
                         ".then(response => response.json())"
                         ".then(data => {"
                             "const select = document.querySelector('#calendar_id');"
-                            "select.innerHTML = '';" // Clear existing options
-                            "const currentId = '" + ConfigManager::getCalendarId() + "';"
+                            "select.innerHTML = '';"
 
                             "const primaryOption = document.createElement('option');"
                             "primaryOption.value = 'primary';"
@@ -177,6 +184,32 @@ const char* SetupServer::getSetupPage() {
                         "})"
                         ".catch(error => {"
                             "document.querySelector('#calendar-loading').textContent = 'Error loading calendars';"
+                            "console.error('Error:', error);"
+                        "});"
+                "}"
+            "</script>"
+            "<script>"
+                "if (currentId) {"
+                    "fetch('/upcoming-bins')"
+                        ".then(response => response.json())"
+                        ".then(data => {"
+                            "const upcomingDiv = document.querySelector('#upcoming-bins');"
+                            "const upcomingList = document.querySelector('#upcoming-bins-list');"
+                            "upcomingList.innerHTML = '';"
+
+                            "const events = data.items || [];"
+                            "if (events.length === 0) {"
+                                "upcomingList.innerHTML = '<li>No collections scheduled</li>';"
+                            "} else {"
+                                "events.forEach(event => {"
+                                    "const date = new Date(event.start.date || event.start.dateTime);"
+                                    "const day = date.toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });"
+                                    "upcomingList.innerHTML += `<li>${day}: ${event.summary}</li>`;"
+                                "});"
+                            "}"
+                            "upcomingDiv.style.display = 'block';"
+                        "})"
+                        ".catch(error => {"
                             "console.error('Error:', error);"
                         "});"
                 "}"

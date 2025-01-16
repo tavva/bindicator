@@ -14,6 +14,7 @@ class SetupServer {
         void handleClient();
         WebServer* server;
         void handleCalendarList();
+        void handleUpcomingBins();
 
     private:
         OAuthHandler& oauthHandler;

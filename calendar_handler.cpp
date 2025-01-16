@@ -104,15 +104,19 @@ String CalendarHandler::urlEncode(const String& str) {
     return encodedString;
 }
 
-String CalendarHandler::getISODate() {
+String CalendarHandler::getISODate(int daysOffset) {
     struct tm timeinfo;
-    if (!getLocalTime(&timeinfo)) {
+    if(!getLocalTime(&timeinfo)) {
         Serial.println("Failed to obtain time");
         return "";
     }
-    char dateStr[11];
-    strftime(dateStr, sizeof(dateStr), "%Y-%m-%d", &timeinfo);
-    return String(dateStr);
+
+    timeinfo.tm_mday += daysOffset;
+    mktime(&timeinfo);
+
+    char timeStringBuff[11];
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%d", &timeinfo);
+    return String(timeStringBuff);
 }
 
 bool CalendarHandler::getAvailableCalendars(JsonDocument& calendars) {
@@ -136,6 +140,48 @@ bool CalendarHandler::getAvailableCalendars(JsonDocument& calendars) {
 
     String payload = http.getString();
     DeserializationError error = deserializeJson(calendars, payload);
+
+    http.end();
+
+    if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
+    if (!oauth.getValidToken(access_token)) {
+        Serial.println("Failed to get valid token for upcoming events request");
+        return false;
+    }
+
+    HTTPClient http;
+    String calendarId = ConfigManager::getCalendarId();
+    String url = CALENDAR_API_BASE + urlEncode(calendarId) + "/events";
+
+    String timeMin = getISODate();
+    String timeMax = getISODate(7);
+
+    url += "?timeMin=" + urlEncode(timeMin);
+    url += "&timeMax=" + urlEncode(timeMax);
+    url += "&singleEvents=true";
+    url += "&orderBy=startTime";
+
+    http.begin(url);
+    http.addHeader("Authorization", "Bearer " + access_token);
+
+    int httpResponseCode = http.GET();
+    if (httpResponseCode != 200) {
+        Serial.println("Calendar Events API Error: " + String(httpResponseCode));
+        http.end();
+        return false;
+    }
+
+    String payload = http.getString();
+    DeserializationError error = deserializeJson(events, payload);
 
     http.end();
 

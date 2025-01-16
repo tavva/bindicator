@@ -33,6 +33,7 @@ void SetupServer::begin() {
     server->on("/factory-reset", HTTP_POST, [this]() { handleFactoryReset(); });
     server->on("/save-calendar", HTTP_POST, std::bind(&SetupServer::handleSaveCalendar, this));
     server->on("/calendars", HTTP_GET, [this]() { this->handleCalendarList(); });
+    server->on("/upcoming-bins", HTTP_GET, [this]() { this->handleUpcomingBins(); });
 
     server->begin();
     Serial.println("Setup server started");
@@ -181,5 +182,23 @@ void SetupServer::handleCalendarList() {
         server->send(200, "application/json", response);
     } else {
         server->send(500, "application/json", "{\"error\":\"Failed to fetch calendars\"}");
+    }
+}
+
+void SetupServer::handleUpcomingBins() {
+    if (!oauthHandler.isAuthorized()) {
+        server->send(401, "application/json", "{\"error\":\"Not authorized\"}");
+        return;
+    }
+
+    StaticJsonDocument<4096> events;
+    CalendarHandler calendarHandler(oauthHandler);
+
+    if (calendarHandler.getUpcomingBinDays(events)) {
+        String response;
+        serializeJson(events, response);
+        server->send(200, "application/json", response);
+    } else {
+        server->send(500, "application/json", "{\"error\":\"Failed to fetch events\"}");
     }
 }
