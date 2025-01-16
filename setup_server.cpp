@@ -45,6 +45,8 @@ void SetupServer::handleSave() {
         config.wifi_password = server->arg("password");
 
         if (ConfigManager::setWifiCredentials(config.wifi_ssid, config.wifi_password)) {
+            ConfigManager::setForcedSetupFlag("restart-in-setup-mode");
+
             String html = R"html(
 <!DOCTYPE html>
 <html>
@@ -61,13 +63,10 @@ void SetupServer::handleSave() {
     <h1>WiFi Settings Saved</h1>
     <div class="message">
         <p>WiFi configuration has been saved.</p>
-        <p>The device will now restart and connect to your WiFi network.</p>
-        <div class="urls">
-            <p>Once connected, you can visit either:</p>
-            <p class="url">http://bindicator.local</p>
-            <p>or wait a moment and check your router for the device's IP address</p>
-        </div>
-        <p><small>(If bindicator.local doesn't work, your device might not support mDNS)</small></p>
+        <p>The device will now restart and enter setup mode to complete configuration.</p>
+        <p>When it's ready, you can complete setup at:</p>
+        <p class="url"><a href="http://bindicator.local">http://bindicator.local</a></p>
+        <p><small>(If bindicator.local doesn't work, you may need to find the device's IP address. The default is 192.168.4.1, but it may be different depending on your router.)</small></p>
     </div>
     <p>The device will restart in 5 seconds...</p>
     <script>
