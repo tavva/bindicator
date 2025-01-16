@@ -11,6 +11,7 @@ class CalendarHandler {
     public:
         CalendarHandler(OAuthHandler& oauthHandler);
         bool checkForBinEvents(bool& hasRecycling, bool& hasRubbish);
+        bool getAvailableCalendars(JsonDocument& calendars);
 
     private:
         OAuthHandler& oauth;

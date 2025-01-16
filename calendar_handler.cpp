@@ -114,3 +114,36 @@ String CalendarHandler::getISODate() {
     strftime(dateStr, sizeof(dateStr), "%Y-%m-%d", &timeinfo);
     return String(dateStr);
 }
+
+bool CalendarHandler::getAvailableCalendars(JsonDocument& calendars) {
+    if (!oauth.getValidToken(access_token)) {
+        Serial.println("Failed to get valid token for calendar list request");
+        return false;
+    }
+
+    HTTPClient http;
+    String url = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+
+    http.begin(url);
+    http.addHeader("Authorization", "Bearer " + access_token);
+
+    int httpResponseCode = http.GET();
+    if (httpResponseCode != 200) {
+        Serial.println("Calendar List API Error: " + String(httpResponseCode));
+        http.end();
+        return false;
+    }
+
+    String payload = http.getString();
+    DeserializationError error = deserializeJson(calendars, payload);
+
+    http.end();
+
+    if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return false;
+    }
+
+    return true;
+}
