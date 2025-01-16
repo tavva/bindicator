@@ -140,10 +140,12 @@ bool OAuthHandler::refreshAccessToken() {
 }
 
 void OAuthHandler::saveRefreshToken(const String& token) {
+    preferences.begin("oauth", false);
     preferences.putString("refresh_token", token);
 }
 
 String OAuthHandler::loadRefreshToken() {
+    preferences.begin("oauth", false);
     return preferences.getString("refresh_token", "");
 }
 
