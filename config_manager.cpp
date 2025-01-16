@@ -5,6 +5,7 @@ bool ConfigManager::prefsInitialized = false;
 const char* ConfigManager::PREF_NAMESPACE = "system";
 const char* ConfigManager::KEY_WIFI_SSID = "wifi_ssid";
 const char* ConfigManager::KEY_WIFI_PASS = "wifi_pass";
+const char* ConfigManager::KEY_FORCED_SETUP = "force_setup";
 
 void ConfigManager::begin() {
     if (!prefsInitialized) {
@@ -39,4 +40,26 @@ bool ConfigManager::setWifiCredentials(const String& ssid, const String& passwor
         Serial.println("Failed to save WiFi credentials");
     }
     return success;
+}
+
+bool ConfigManager::isInForcedSetupMode() {
+    begin();
+    return !preferences.getString(KEY_FORCED_SETUP, "").isEmpty();
+}
+
+void ConfigManager::setForcedSetupFlag(const String& flag) {
+    begin();
+    preferences.putString(KEY_FORCED_SETUP, flag);
+}
+
+void ConfigManager::processSetupFlag() {
+    begin();
+    String flag = preferences.getString(KEY_FORCED_SETUP, "");
+    if (flag.isEmpty()) {
+        return;
+    } else if (flag == "restart-in-setup-mode") {
+        setForcedSetupFlag("in-setup-mode");
+    } else if (flag == "in-setup-mode") {
+        preferences.remove(KEY_FORCED_SETUP);
+    }
 }

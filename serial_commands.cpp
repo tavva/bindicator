@@ -19,6 +19,8 @@ void SerialCommands::handle() {
             showHelp();
         } else if (command == "prefs") {
             showPreferences();
+        } else if (command == "setup") {
+            enterSetupMode();
         }
     }
 }
@@ -53,6 +55,7 @@ void SerialCommands::showHelp() {
     Serial.println("clear       - Clear all preferences and restart");
     Serial.println("clear_oauth - Clear only OAuth preferences and restart");
     Serial.println("prefs       - Show all stored preferences");
+    Serial.println("setup       - Enter setup mode");
     Serial.println("help        - Show this help message");
 }
 
@@ -84,4 +87,12 @@ void SerialCommands::showPreferences() {
     printNamespace("oauth");
 
     Serial.println("------------------");
+}
+
+void SerialCommands::enterSetupMode() {
+    Serial.println("Entering setup mode...");
+
+    ConfigManager::setForcedSetupFlag("restart-in-setup-mode");
+
+    ESP.restart();
 }

@@ -15,6 +15,7 @@ class SerialCommands {
         static void showHelp();
         static void showPreferences();
         static void printNamespace(const char* name);
+        static void enterSetupMode();
 };
 
 #endif

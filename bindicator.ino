@@ -126,11 +126,10 @@ void setup() {
     delay(2000);
 
     ConfigManager::begin();
+    ConfigManager::processSetupFlag();
 
     display.begin();
-
     oauth.begin(nullptr);
-
     commandQueue = xQueueCreate(10, sizeof(Command));
 
     xTaskCreatePinnedToCore(
@@ -143,7 +142,13 @@ void setup() {
         1
     );
 
-    if (!setupServer.isConfigured() || !oauth.hasStoredToken()) {
+    if (ConfigManager::isInForcedSetupMode()) {
+        Serial.println("Force setup mode enabled");
+        startSetupMode();
+        return;
+    }
+
+    if (!setupServer.isConfigured() || oauth.loadRefreshToken().isEmpty()) {
         Serial.println("No valid configuration found - entering setup mode");
         startSetupMode();
     } else {
@@ -157,8 +162,8 @@ void loop() {
 
     if (inSetupMode) {
         setupServer.handleClient();
-
-        if (setupServer.isConfigured() && oauth.isAuthorized()) {
+        if (setupServer.isConfigured() && oauth.isAuthorized() &&
+                !ConfigManager::isInForcedSetupMode()) {
             Serial.println("Setup complete, restarting...");
             delay(1000);
             ESP.restart(); // to enter normal operation mode

@@ -13,10 +13,15 @@ class ConfigManager {
         static String getWifiPassword();
         static bool setWifiCredentials(const String& ssid, const String& password);
 
+        static bool isInForcedSetupMode();
+        static void setForcedSetupFlag(const String& flag);
+        static void processSetupFlag();
+
     private:
-        static const char* PREF_NAMESPACE;  // Will be "system"
-        static const char* KEY_WIFI_SSID;   // Will be "wifi_ssid"
-        static const char* KEY_WIFI_PASS;   // Will be "wifi_pass"
+        static const char* PREF_NAMESPACE;
+        static const char* KEY_WIFI_SSID;
+        static const char* KEY_WIFI_PASS;
+        static const char* KEY_FORCED_SETUP;
 
         static Preferences preferences;
         static bool prefsInitialized;
