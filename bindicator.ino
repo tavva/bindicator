@@ -55,7 +55,6 @@ bool tryWiFiConnection(int maxAttempts = 3) {
         }
 
         Serial.println("\nWiFi connection failed");
-        WiFi.disconnect();
         delay(1000);
     }
     return false;
