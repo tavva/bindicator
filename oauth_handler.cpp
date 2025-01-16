@@ -144,11 +144,7 @@ void OAuthHandler::saveRefreshToken(const String& token) {
 }
 
 String OAuthHandler::loadRefreshToken() {
-    String token = preferences.getString("refresh_token", "");
-    Serial.print("Loaded refresh token from preferences: ");
-    Serial.println(token.isEmpty() ? "EMPTY" : token);
-
-    return token;
+    return preferences.getString("refresh_token", "");
 }
 
 String OAuthHandler::urlEncode(const String& str) {
