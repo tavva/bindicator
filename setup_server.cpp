@@ -28,6 +28,7 @@ void SetupServer::begin() {
     server->on("/oauth_callback", HTTP_GET, std::bind(&SetupServer::handleOAuth, this));
     server->on("/restart", HTTP_POST, [this]() { handleRestart(); });
     server->on("/factory-reset", HTTP_POST, [this]() { handleFactoryReset(); });
+    server->on("/save-calendar", HTTP_POST, std::bind(&SetupServer::handleSaveCalendar, this));
 
     server->begin();
     Serial.println("Setup server started");
@@ -164,6 +165,18 @@ const char* SetupServer::getSetupPage() {
     </div>
 
     <div class="setup-section">
+        <h2>Step 3: Calendar Settings</h2>
+        <form action="/save-calendar" method="POST">
+            <label for="calendar_id">Calendar ID:</label>
+            <input type="text" id="calendar_id" name="calendar_id" value=")html" +
+    ConfigManager::getCalendarId() +
+    R"html(">
+            <p class="help-text">Leave as "primary" to use your main calendar, or enter a specific calendar ID</p>
+            <button type="submit">Save Calendar Settings</button>
+        </form>
+    </div>
+
+    <div class="setup-section">
         <h2>Device Control</h2>
         <div style="display: flex; gap: 10px;">
             <button onclick="restartDevice()" style="background-color: #ff4444;">Restart Device</button>
@@ -239,4 +252,37 @@ void SetupServer::handleFactoryReset() {
 
     delay(1000);
     ESP.restart();
+}
+
+void SetupServer::handleSaveCalendar() {
+    if (server->hasArg("calendar_id")) {
+        String calendarId = server->arg("calendar_id");
+
+        if (ConfigManager::setCalendarId(calendarId)) {
+            String html = R"html(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar Settings Saved</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
+        .message { margin: 20px 0; padding: 20px; border: 1px solid #4CAF50; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Calendar Settings Saved</h1>
+    <div class="message">
+        <p>Calendar ID has been updated successfully.</p>
+    </div>
+    <p><a href="/">Return to Setup</a></p>
+</body>
+</html>)html";
+
+            server->send(200, "text/html", html);
+        } else {
+            server->send(500, "text/plain", "Failed to save calendar ID");
+        }
+    } else {
+        server->send(400, "text/plain", "Missing calendar ID");
+    }
 }

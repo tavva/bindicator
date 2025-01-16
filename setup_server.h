@@ -30,6 +30,7 @@ class SetupServer {
         const char* getSetupPage();
         void handleRestart();
         void handleFactoryReset();
+        void handleSaveCalendar();
 };
 
 #endif
