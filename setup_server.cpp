@@ -26,6 +26,7 @@ void SetupServer::begin() {
         server->send(302);
     });
     server->on("/oauth_callback", HTTP_GET, std::bind(&SetupServer::handleOAuth, this));
+    server->on("/restart", HTTP_POST, [this]() { handleRestart(); });
 
     server->begin();
     Serial.println("Setup server started");
@@ -161,11 +162,26 @@ const char* SetupServer::getSetupPage() {
     R"html(
     </div>
 
+    <div class="setup-section">
+        <h2>Device Control</h2>
+        <button onclick="restartDevice()" style="background-color: #ff4444;">Restart Device</button>
+    </div>
+
     <div class="status">
         <h3>Current Status:</h3>
         <p>WiFi Configuration: )html" + wifiStatus + R"html(</p>
         <p>Google Calendar: )html" + oauthStatus + R"html(</p>
     </div>
+
+    <script>
+        function restartDevice() {
+            if (confirm('Are you sure you want to restart the device?')) {
+                fetch('/restart', { method: 'POST' })
+                    .then(() => alert('Device is restarting...'))
+                    .catch(err => alert('Error: ' + err));
+            }
+        }
+    </script>
 </body>
 </html>)html";
 
@@ -189,4 +205,10 @@ void SetupServer::handleOAuth() {
 
 bool SetupServer::isConfigured() {
     return ConfigManager::isConfigured();
+}
+
+void SetupServer::handleRestart() {
+    server->send(200, "text/plain", "Restarting...");
+    delay(1000);
+    ESP.restart();
 }
