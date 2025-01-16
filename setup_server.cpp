@@ -212,7 +212,8 @@ void SetupServer::handleOAuth() {
         String error;
 
         if (oauthHandler.exchangeAuthCode(code, error)) {
-            server->send(200, "text/plain", "OK");
+            server->sendHeader("Location", "/");
+            server->send(302);
         } else {
             server->send(400, "text/plain", "Failed to exchange auth code: " + error);
         }
