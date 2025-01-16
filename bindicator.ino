@@ -162,13 +162,6 @@ void loop() {
 
     if (inSetupMode) {
         setupServer.handleClient();
-        if (setupServer.isConfigured() && oauth.isAuthorized() &&
-                !ConfigManager::isInForcedSetupMode()) {
-            Serial.println("Setup complete, restarting...");
-            delay(1000);
-            ESP.restart(); // to enter normal operation mode
-        }
-
         yield();
     }
 }
