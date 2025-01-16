@@ -98,7 +98,7 @@ const char* SetupServer::getSetupPage() {
     String wifiStatus;
     String sectionClass;
 
-    if (config.wifi_ssid.isEmpty() || config.wifi_password.isEmpty()) {
+    if (config.wifi_ssid.isEmpty()) {
         wifiStatus = "<span class='status-incomplete'>Not Configured</span>";
         sectionClass = " incomplete";
     } else if (WiFi.status() != WL_CONNECTED) {
