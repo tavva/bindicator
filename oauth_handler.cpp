@@ -19,9 +19,6 @@ void OAuthHandler::begin(WebServer* server) {
 
 bool OAuthHandler::isAuthorized() {
     refresh_token = loadRefreshToken();
-    Serial.print("Checking authorisation. Refresh token: ");
-    Serial.println(refresh_token);
-    Serial.println(refresh_token.isEmpty() ? "empty" : "present");
     return !refresh_token.isEmpty();
 }
 
