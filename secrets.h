@@ -8,7 +8,6 @@ extern const char* WIFI_PASSWORD;
 
 extern const String GOOGLE_CLIENT_ID;
 extern const String GOOGLE_CLIENT_SECRET;
-extern const String GOOGLE_CALENDAR_ID;
 extern const String GOOGLE_REDIRECT_URI;
 
 extern const String AP_PASSWORD;

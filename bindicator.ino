@@ -16,7 +16,7 @@
 #include "serial_commands.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
-CalendarHandler calendar(oauth, GOOGLE_CALENDAR_ID);
+CalendarHandler calendar(oauth);
 DisplayHandler display;
 bool hasRecycling, hasRubbish;
 SetupServer setupServer(oauth);

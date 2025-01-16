@@ -1,8 +1,9 @@
 #include "secrets.h"
 #include "calendar_handler.h"
+#include "config_manager.h"
 
-CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler, const String& calendarId)
-    : oauth(oauthHandler), GOOGLE_CALENDAR_ID(calendarId) {}
+CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler)
+    : oauth(oauthHandler) {}
 
 bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     String today = getISODate();
@@ -26,7 +27,7 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     }
 
     HTTPClient http;
-    String url = CALENDAR_API_BASE + GOOGLE_CALENDAR_ID + "/events";
+    String url = CALENDAR_API_BASE + ConfigManager::getCalendarId() + "/events";
     url += "?timeMin=" + urlEncode(timeMin);
     url += "&timeMax=" + urlEncode(timeMax);
     url += "&singleEvents=true";

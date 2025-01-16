@@ -9,13 +9,12 @@
 
 class CalendarHandler {
     public:
-        CalendarHandler(OAuthHandler& oauthHandler, const String& calendarId);
+        CalendarHandler(OAuthHandler& oauthHandler);
         bool checkForBinEvents(bool& hasRecycling, bool& hasRubbish);
 
     private:
         OAuthHandler& oauth;
         String access_token;
-        const String GOOGLE_CALENDAR_ID;
         const String CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/calendars/";
 
         String getISODate();
