@@ -95,10 +95,19 @@ void SetupServer::handleRoot() {
 const char* SetupServer::getSetupPage() {
     static String page;
 
-    String wifiStatus = config.wifi_ssid.isEmpty() ?
-        "<span class='status-incomplete'>Not Configured</span>" :
-        "<span class='status-complete'>Configured (" + config.wifi_ssid + ")" +
-        (WiFi.status() == WL_CONNECTED ? " - Connected" : " - Not Connected") + "</span>";
+    String wifiStatus;
+    String sectionClass;
+
+    if (config.wifi_ssid.isEmpty() || config.wifi_password.isEmpty()) {
+        wifiStatus = "<span class='status-incomplete'>Not Configured</span>";
+        sectionClass = " incomplete";
+    } else if (WiFi.status() != WL_CONNECTED) {
+        wifiStatus = "<span class='status-incomplete'>Configured (" + config.wifi_ssid + ") - Not Connected</span>";
+        sectionClass = " incomplete";
+    } else {
+        wifiStatus = "<span class='status-complete'>Configured (" + config.wifi_ssid + ") - Connected</span>";
+        sectionClass = " complete";
+    }
 
     String oauthStatus = oauthHandler.isAuthorized() ?
         "<span class='status-complete'>Connected</span>" :
@@ -142,7 +151,7 @@ const char* SetupServer::getSetupPage() {
             "<h1>Bindicator Setup</h1>");
 
     // WiFi Section
-    page += "<div class='setup-section" + String(config.wifi_ssid.isEmpty() ? " incomplete" : " complete") + "'>"
+    page += "<div class='setup-section" + sectionClass + "'>"
             "<h2><span class='step-number'>1</span> WiFi Setup</h2>"
             "<form action='/save' method='POST'>"
                 "<label for='ssid'>WiFi Name:</label>"
