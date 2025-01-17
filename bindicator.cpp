@@ -8,7 +8,7 @@ bool Bindicator::binTakenOut = false;
 void Bindicator::handleButtonPress() {
     if (!binTakenOut && currentBinType != BinType::NONE) {
         binTakenOut = true;
-        Command cmd = CMD_SHOW_SETUP_MODE;
+        Command cmd = CMD_SHOW_COMPLETED;
         xQueueSend(commandQueue, &cmd, 0);
     }
 }
