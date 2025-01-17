@@ -94,34 +94,29 @@ const char* SetupServer::getSetupPage() {
     }
 
     // Calendar Section
-    String calendarOptions = "<div id='calendar-select-container'>"
-        "<select id='calendar_id' name='calendar_id' style='display:none;'>"
-            "<option value='" + ConfigManager::getCalendarId() + "' selected>" +
-            (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
-            "</option>"
-        "</select>"
-        "<div id='calendar-loading'>Loading calendars...</div>"
-        "</div>";
-
     page += "<div class='setup-section" +
             String(!oauthHandler.isAuthorized() ? " disabled" : " complete") + "'>" +
             "<h2><span class='step-number'>3</span> Calendar Settings</h2>"
             "<form action='/save-calendar' method='POST'>"
-                "<label for='calendar_id'>Select Calendar:</label>" +
-                calendarOptions +
+                "<label for='calendar_id'>Select Calendar:</label>"
+                "<div id='calendar-select-container'>"
+                    "<select id='calendar_id' name='calendar_id' style='display:none;' onchange='updateCalendar(event)'>"
+                        "<option value='" + ConfigManager::getCalendarId() + "' selected>" +
+                        (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
+                        "</option>"
+                    "</select>"
+                    "<div id='calendar-loading'>Loading calendars...</div>"
+                "</div>"
                 "<p class='help-text'>Choose which calendar contains your bin collection schedule</p>"
-                "<button type='submit'" +
-                String(!oauthHandler.isAuthorized() ? " disabled" : "") +
-                ">Save Calendar Settings</button>"
             "</form>"
             "<p class='status'>Status: " + calendarStatus + "</p>"
-            "</div>";
-
-    page += "<div id='upcoming-bins' style='margin-top: 10px; display: none;'>"
-            "<p class='help-text'>Upcoming collections in next 7 days:</p>"
-            "<ul id='upcoming-bins-list' style='color: #888; font-size: 0.9em;'>"
-            "<li>Loading...</li>"
-            "</ul>"
+            "<div id='upcoming-bins' style='margin-top: 15px; display: none;'>"
+                "<hr style='border: none; border-top: 1px solid #444; margin: 15px 0;'>"
+                "<h3 style='color: #ffffff; margin: 0 0 10px 0;'>Upcoming Collections</h3>"
+                "<ul id='upcoming-bins-list' style='color: #888; font-size: 0.9em; margin: 0; padding-left: 20px;'>"
+                    "<li>Loading...</li>"
+                "</ul>"
+            "</div>"
             "</div>";
 
     // Device Control Section
@@ -189,29 +184,52 @@ const char* SetupServer::getSetupPage() {
                 "}"
             "</script>"
             "<script>"
-                "if (currentId) {"
-                    "fetch('/upcoming-bins')"
-                        ".then(response => response.json())"
-                        ".then(data => {"
-                            "const upcomingDiv = document.querySelector('#upcoming-bins');"
-                            "const upcomingList = document.querySelector('#upcoming-bins-list');"
-                            "upcomingList.innerHTML = '';"
+                "function updateCalendar(event) {"
+                    "event.preventDefault();"
+                    "const select = document.querySelector('#calendar_id');"
+                    "const calendarId = select.value;"
 
-                            "const events = data.items || [];"
-                            "if (events.length === 0) {"
-                                "upcomingList.innerHTML = '<li>No collections scheduled</li>';"
-                            "} else {"
-                                "events.forEach(event => {"
-                                    "const date = new Date(event.start.date || event.start.dateTime);"
-                                    "const day = date.toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });"
-                                    "upcomingList.innerHTML += `<li>${day}: ${event.summary}</li>`;"
-                                "});"
-                            "}"
-                            "upcomingDiv.style.display = 'block';"
-                        "})"
-                        ".catch(error => {"
-                            "console.error('Error:', error);"
-                        "});"
+                    "const upcomingDiv = document.querySelector('#upcoming-bins');"
+                    "const upcomingList = document.querySelector('#upcoming-bins-list');"
+                    "upcomingList.innerHTML = '<li>Loading new calendar schedule...</li>';"
+                    "upcomingDiv.style.display = 'block';"
+
+                    "fetch('/save-calendar', {"
+                        "method: 'POST',"
+                        "headers: {'Content-Type': 'application/x-www-form-urlencoded'},"
+                        "body: 'calendar_id=' + encodeURIComponent(calendarId)"
+                    "})"
+                    ".then(response => {"
+                        "if (!response.ok) throw new Error('Failed to save calendar');"
+
+                        "return fetch('/upcoming-bins');"
+                    "})"
+                    ".then(response => response.json())"
+                    ".then(data => {"
+                        "upcomingList.innerHTML = '';"
+                        "const events = data.items || [];"
+                        "if (events.length === 0) {"
+                            "upcomingList.innerHTML = '<li>No collections scheduled</li>';"
+                        "} else {"
+                            "events.forEach(event => {"
+                                "const date = new Date(event.start.date || event.start.dateTime);"
+                                "const day = date.toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });"
+                                "upcomingList.innerHTML += `<li>${day}: ${event.summary}</li>`;"
+                            "});"
+                        "}"
+                    "})"
+                    ".catch(error => {"
+                        "console.error('Error:', error);"
+                        "upcomingList.innerHTML = '<li>Error loading schedule</li>';"
+                        "alert('Failed to update calendar settings');"
+                    "});"
+
+                    "return false;"
+                "}"
+            "</script>"
+            "<script>"
+                "if (currentId) {"
+                    "updateCalendar(new Event('load'));"
                 "}"
             "</script>"
         "</body>"

@@ -181,25 +181,19 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
     url += "&singleEvents=true";
     url += "&orderBy=startTime";
 
-    Serial.println("Upcoming bins URL: " + url);  // Debug print
-
     http.begin(url);
     http.addHeader("Authorization", "Bearer " + access_token);
 
     int httpResponseCode = http.GET();
-    Serial.println("Response code: " + String(httpResponseCode));  // Debug print
-
     if (httpResponseCode != 200) {
         Serial.println("Calendar Events API Error: " + String(httpResponseCode));
         String response = http.getString();
-        Serial.println("Error response: " + response);  // Debug print
         http.end();
         return false;
     }
 
     String payload = http.getString();
     StaticJsonDocument<4096> allEvents;
-    Serial.println("Response payload: " + payload);  // Debug print
 
     DeserializationError error = deserializeJson(allEvents, payload);
 
