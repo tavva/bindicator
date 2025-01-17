@@ -1,5 +1,6 @@
 #include "bindicator.h"
 #include <time.h>
+#include "tasks.h"
 
 BinType Bindicator::currentBinType = BinType::NONE;
 bool Bindicator::binTakenOut = false;
@@ -24,7 +25,28 @@ bool Bindicator::shouldCheckCalendar() {
     return true;
 }
 
+void Bindicator::sendCommand(Command cmd) {
+    if (xQueueSend(commandQueue, &cmd, 0) != pdTRUE) {
+        Serial.println("Failed to send command to queue!");
+    }
+}
+
 void Bindicator::setBinType(BinType type) {
+    Command cmd;
+    switch (type) {
+        case BinType::RECYCLING:
+            cmd = CMD_SHOW_RECYCLING;
+            break;
+        case BinType::RUBBISH:
+            cmd = CMD_SHOW_RUBBISH;
+            break;
+        default:
+            cmd = CMD_SHOW_NEITHER;
+            break;
+    }
+
+    sendCommand(cmd);
+
     currentBinType = type;
     binTakenOut = false;
 }

@@ -4,6 +4,7 @@
 #include "calendar_handler.h"
 #include "time_manager.h"
 #include "animations.h"
+#include "bindicator.h"
 #include <WiFi.h>
 
 uint8_t Matrix_Data[8][8];
@@ -131,21 +132,12 @@ void calendarTask(void* parameter) {
             bool hasRubbish = false;
 
             if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-                Command cmd;
-
                 if (hasRecycling) {
-                    Serial.println("Recycling only");
-                    cmd = CMD_SHOW_RECYCLING;
+                    Bindicator::setBinType(BinType::RECYCLING);
                 } else if (hasRubbish) {
-                    Serial.println("Rubbish only");
-                    cmd = CMD_SHOW_RUBBISH;
+                    Bindicator::setBinType(BinType::RUBBISH);
                 } else {
-                    Serial.println("No bins");
-                    cmd = CMD_SHOW_NEITHER;
-                }
-
-                if (xQueueSend(commandQueue, &cmd, 0) != pdTRUE) {
-                    Serial.println("Failed to send command to queue!");
+                    Bindicator::setBinType(BinType::NONE);
                 }
             } else {
                 Serial.println("Failed to check calendar");

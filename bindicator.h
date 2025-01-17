@@ -2,6 +2,7 @@
 #define BINDICATOR_H
 
 #include <Arduino.h>
+#include "tasks.h"
 
 enum class BinType {
     NONE,
@@ -24,6 +25,7 @@ class Bindicator {
         static const int RESET_HOUR = 3;
 
         static bool isAfterResetTime();
+        static void sendCommand(Command cmd);
 };
 
 #endif
