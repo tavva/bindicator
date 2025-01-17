@@ -1,5 +1,6 @@
 #include "button_handler.h"
 #include "bindicator.h"
+#include "config_manager.h"
 
 ButtonHandler::ButtonHandler(uint8_t pin, unsigned long longPressTime)
     : buttonPin(pin), longPressTime(longPressTime) {}
@@ -63,5 +64,7 @@ void BindicatorButton::onShortPress() {
 }
 
 void BindicatorButton::onLongPress() {
-    Serial.println("Long press detected");
+    Serial.println("Long press detected - entering setup mode");
+    ConfigManager::setForcedSetupFlag("restart-in-setup-mode");
+    ESP.restart();
 }
