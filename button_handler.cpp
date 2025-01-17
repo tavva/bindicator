@@ -1,4 +1,5 @@
 #include "button_handler.h"
+#include "bindicator.h"
 
 ButtonHandler::ButtonHandler(uint8_t pin, unsigned long longPressTime)
     : buttonPin(pin), longPressTime(longPressTime) {}
@@ -58,6 +59,7 @@ void ButtonHandler::buttonTask(void *parameter) {
 
 void BindicatorButton::onShortPress() {
     Serial.println("Short press detected");
+    Bindicator::handleButtonPress();
 }
 
 void BindicatorButton::onLongPress() {
