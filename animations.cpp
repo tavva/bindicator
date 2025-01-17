@@ -22,6 +22,17 @@ const uint8_t Animations::binImage[8][8] = {
     {0,1,1,1,1,1,1,0}
 };
 
+const uint8_t Animations::completeImage[8][8] = {
+    {0,0,0,0,0,0,1,0},
+    {0,0,0,0,0,1,0,0},
+    {0,0,0,0,1,0,0,0},
+    {0,0,0,1,0,0,0,0},
+    {1,0,1,0,0,0,0,0},
+    {0,1,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0}
+};
+
 int Animations::brightnessTick = 0;
 int Animations::loadingPos = 0;
 int Animations::animationCounter = 0;
@@ -31,6 +42,7 @@ const Color Animations::ERROR_DOT_BLUE(0, 0, 50);
 const Color Animations::ERROR_DOT_YELLOW(50, 50, 0);
 const Color Animations::ERROR_DOT_PURPLE(50, 0, 50);
 const Color Animations::RECYCLING_GREEN(0, 50, 0);
+const Color Animations::COMPLETE_GREEN(0, 50, 0);
 const Color Animations::RUBBISH_BROWN(40, 10, 0);
 const Color Animations::DEFAULT_BLUE(0, 0, 50);
 const Color Animations::SETUP_YELLOW(50, 50, 0);
@@ -166,6 +178,24 @@ void Animations::drawBinImage(DisplayHandler& display, Color color) {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             if (binImage[row][col] == 1) {
+                display.matrix.setPixelColor(row * 8 + col,
+                    display.matrix.Color(
+                        (color.r * brightness) / 64,
+                        (color.g * brightness) / 64,
+                        (color.b * brightness) / 64
+                    )
+                );
+            }
+        }
+    }
+}
+
+void Animations::drawComplete(DisplayHandler& display, Color color) {
+    uint8_t brightness = calculateBrightness();
+
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            if (completeImage[row][col] == 1) {
                 display.matrix.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (color.r * brightness) / 64,

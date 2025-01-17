@@ -31,6 +31,7 @@ class Animations {
         static const Color DEFAULT_BLUE;
         static const Color SETUP_YELLOW;
         static const Color LOADING_WHITE;
+        static const Color COMPLETE_GREEN;
 
         static void drawError(DisplayHandler& display, ErrorType type);
         static void drawPrepare(DisplayHandler& display);
@@ -38,10 +39,11 @@ class Animations {
         static void drawSetupMode(DisplayHandler& display);
         static void drawPulse(DisplayHandler& display, Color color);
         static void drawBinImage(DisplayHandler& display, Color color);
-
+        static void drawComplete(DisplayHandler& display, Color color);
     private:
         static const uint8_t exclamation[8][8];
         static const uint8_t binImage[8][8];
+        static const uint8_t completeImage[8][8];
         static int brightnessTick;
         static int loadingPos;
         static int animationCounter;
