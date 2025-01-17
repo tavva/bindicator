@@ -188,6 +188,10 @@ const char* SetupServer::getSetupPage() {
                     "event.preventDefault();"
                     "const select = document.querySelector('#calendar_id');"
                     "const calendarId = select.value;"
+                    "const selectedOption = select.options[select.selectedIndex];"
+
+                    "const statusElement = document.querySelector('#calendar-status');"
+                    "statusElement.textContent = 'Saving...';"
 
                     "const upcomingDiv = document.querySelector('#upcoming-bins');"
                     "const upcomingList = document.querySelector('#upcoming-bins-list');"
@@ -201,6 +205,8 @@ const char* SetupServer::getSetupPage() {
                     "})"
                     ".then(response => {"
                         "if (!response.ok) throw new Error('Failed to save calendar');"
+
+                        "statusElement.textContent = 'Configured (' + selectedOption.text + ')';"
 
                         "return fetch('/upcoming-bins');"
                     "})"
@@ -220,6 +226,7 @@ const char* SetupServer::getSetupPage() {
                     "})"
                     ".catch(error => {"
                         "console.error('Error:', error);"
+                        "statusElement.textContent = 'Error saving calendar';"
                         "upcomingList.innerHTML = '<li>Error loading schedule</li>';"
                         "alert('Failed to update calendar settings');"
                     "});"
