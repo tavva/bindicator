@@ -14,6 +14,7 @@
 #include "animations.h"
 #include "config_manager.h"
 #include "serial_commands.h"
+#include "button_handler.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 CalendarHandler calendar(oauth);
@@ -21,6 +22,10 @@ DisplayHandler display;
 bool hasRecycling, hasRubbish;
 SetupServer setupServer(oauth);
 bool inSetupMode = false;
+
+const int BUTTON_PIN = 2;
+const int LONG_PRESS_TIME = 3000;
+BindicatorButton button(BUTTON_PIN, LONG_PRESS_TIME);
 
 bool setupMDNS() {
     if (!MDNS.begin("bindicator")) {
@@ -154,7 +159,11 @@ void setup() {
         Serial.println("Configuration loaded - starting normal mode");
         startNormalMode();
     }
+
+    button.begin();
 }
+
+
 
 void loop() {
     SerialCommands::handle();
@@ -163,4 +172,6 @@ void loop() {
         setupServer.handleClient();
         yield();
     }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
 }
