@@ -126,6 +126,9 @@ void calendarTask(void* parameter) {
     Serial.println("Time synchronized!");
 
     while(true) {
+        if (!Bindicator::shouldCheckCalendar()) {
+            return;
+        }
         if (WiFi.status() == WL_CONNECTED) {
             Serial.println("Checking calendar...");
             bool hasRecycling = false;
