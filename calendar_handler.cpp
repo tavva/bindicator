@@ -165,6 +165,10 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
     String timeMin = getISODate();
     String timeMax = getISODate(7);
 
+    if (timeMin.isEmpty() || timeMax.isEmpty()) {
+        Serial.println("Failed to get valid time range for upcoming bins");
+        return false;
+    }
 
     url += "?timeMin=" + timeMin + "T00:00:00Z";
     url += "&timeMax=" + timeMax + "T23:59:59Z";
