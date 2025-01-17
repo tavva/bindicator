@@ -18,6 +18,7 @@ class CalendarHandler {
         OAuthHandler& oauth;
         String access_token;
         const String CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/calendars/";
+        static const int DAYS_TO_CHECK_BIN_SCHEDULE = 21;
 
         String getISODate(int daysOffset = 0);
         String urlEncode(const String& str);

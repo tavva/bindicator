@@ -5,6 +5,12 @@
 CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler)
     : oauth(oauthHandler) {}
 
+bool CalendarHandler::isBinEvent(const String& summary, bool& isRecycling, bool& isRubbish) const {
+    isRecycling = summary.indexOf("(recycling)") >= 0;
+    isRubbish = summary.indexOf("(rubbish)") >= 0;
+    return isRecycling || isRubbish;
+}
+
 bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
     String today = getISODate();
     if (today.isEmpty()) {
@@ -163,7 +169,7 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
     String url = CALENDAR_API_BASE + urlEncode(calendarId) + "/events";
 
     String timeMin = getISODate();
-    String timeMax = getISODate(7);
+    String timeMax = getISODate(DAYS_TO_CHECK_BIN_SCHEDULE);
 
     if (timeMin.isEmpty() || timeMax.isEmpty()) {
         Serial.println("Failed to get valid time range for upcoming bins");
@@ -175,18 +181,27 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
     url += "&singleEvents=true";
     url += "&orderBy=startTime";
 
+    Serial.println("Upcoming bins URL: " + url);  // Debug print
+
     http.begin(url);
     http.addHeader("Authorization", "Bearer " + access_token);
 
     int httpResponseCode = http.GET();
+    Serial.println("Response code: " + String(httpResponseCode));  // Debug print
+
     if (httpResponseCode != 200) {
         Serial.println("Calendar Events API Error: " + String(httpResponseCode));
+        String response = http.getString();
+        Serial.println("Error response: " + response);  // Debug print
         http.end();
         return false;
     }
 
     String payload = http.getString();
-    DeserializationError error = deserializeJson(events, payload);
+    StaticJsonDocument<4096> allEvents;
+    Serial.println("Response payload: " + payload);  // Debug print
+
+    DeserializationError error = deserializeJson(allEvents, payload);
 
     http.end();
 
@@ -194,6 +209,16 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
         Serial.print("deserializeJson() failed: ");
         Serial.println(error.c_str());
         return false;
+    }
+
+    JsonArray filteredItems = events.createNestedArray("items");
+
+    for (JsonVariant event : allEvents["items"].as<JsonArray>()) {
+        String summary = event["summary"].as<String>();
+        bool isRecycling, isRubbish;
+        if (isBinEvent(summary, isRecycling, isRubbish)) {
+            filteredItems.add(event);
+        }
     }
 
     return true;
