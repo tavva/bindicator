@@ -165,8 +165,9 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
     String timeMin = getISODate();
     String timeMax = getISODate(7);
 
-    url += "?timeMin=" + urlEncode(timeMin);
-    url += "&timeMax=" + urlEncode(timeMax);
+
+    url += "?timeMin=" + timeMin + "T00:00:00Z";
+    url += "&timeMax=" + timeMax + "T23:59:59Z";
     url += "&singleEvents=true";
     url += "&orderBy=startTime";
 
