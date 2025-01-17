@@ -21,6 +21,7 @@ class CalendarHandler {
 
         String getISODate(int daysOffset = 0);
         String urlEncode(const String& str);
+        bool isBinEvent(const String& summary, bool& isRecycling, bool& isRubbish) const;
 };
 
 #endif
