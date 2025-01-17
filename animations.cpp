@@ -31,7 +31,7 @@ const Color Animations::ERROR_DOT_BLUE(0, 0, 50);
 const Color Animations::ERROR_DOT_YELLOW(50, 50, 0);
 const Color Animations::ERROR_DOT_PURPLE(50, 0, 50);
 const Color Animations::RECYCLING_GREEN(0, 50, 0);
-const Color Animations::RUBBISH_BROWN(20, 40, 0);
+const Color Animations::RUBBISH_BROWN(40, 10, 0);
 const Color Animations::DEFAULT_BLUE(0, 0, 50);
 const Color Animations::SETUP_YELLOW(50, 50, 0);
 const Color Animations::LOADING_WHITE(50, 50, 50);
