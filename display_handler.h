@@ -9,9 +9,6 @@ class DisplayHandler {
         // https://www.waveshare.com/wiki/ESP32-S3-Matrix
         DisplayHandler(uint8_t pin = 14);
         void begin();
-        void showRecycling();
-        void showRubbish();
-        void showNeither();
         void update();
 
         Adafruit_NeoPixel matrix;

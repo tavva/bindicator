@@ -15,24 +15,6 @@ void DisplayHandler::begin() {
     matrix.show();
 }
 
-void DisplayHandler::showRecycling() {
-    currentColor = matrix.Color(0, 50, 0);  // Green
-    fillScreen(currentColor);
-    isPulsing = true;
-}
-
-void DisplayHandler::showRubbish() {
-    currentColor = matrix.Color(20, 40, 0);  // Brown
-    fillScreen(currentColor);
-    isPulsing = true;
-}
-
-void DisplayHandler::showNeither() {
-    currentColor = matrix.Color(0, 0, 50);  // Blue
-    fillScreen(currentColor);
-    isPulsing = true;
-}
-
 void DisplayHandler::update() {
     if (!isPulsing) return;
 
