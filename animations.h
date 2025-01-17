@@ -37,9 +37,11 @@ class Animations {
         static void drawLoading(DisplayHandler& display);
         static void drawSetupMode(DisplayHandler& display);
         static void drawPulse(DisplayHandler& display, Color color);
+        static void drawBinImage(DisplayHandler& display, Color color);
 
     private:
         static const uint8_t exclamation[8][8];
+        static const uint8_t binImage[8][8];
         static int brightnessTick;
         static int loadingPos;
         static int animationCounter;

@@ -17,6 +17,7 @@ enum Command {
     CMD_SHOW_ERROR_OTHER
 };
 
+extern bool isBin;
 extern uint8_t Matrix_Data[8][8];
 extern uint8_t RGB_Data1[64][3];
 

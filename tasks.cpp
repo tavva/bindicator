@@ -20,6 +20,7 @@ void animationTask(void* parameter) {
     static bool isLoading = true;
     static bool isSetupMode = false;
     static bool isError = false;
+    static bool isBin = false;
     static Color color = Animations::DEFAULT_BLUE;
 
     extern DisplayHandler display;
@@ -30,14 +31,17 @@ void animationTask(void* parameter) {
             Serial.printf("Animation received command: %d\n", cmd);
             isLoading = false;
             isError = false;
+            isBin = false;
 
             switch(cmd) {
                 case CMD_SHOW_RECYCLING:
                     Serial.println("Switching to green (recycling)");
+                    isBin = true;
                     color = Animations::RECYCLING_GREEN;
                     break;
                 case CMD_SHOW_RUBBISH:
                     Serial.println("Switching to brown (rubbish)");
+                    isBin = true;
                     color = Animations::RUBBISH_BROWN;
                     break;
                 case CMD_SHOW_NEITHER:
@@ -81,6 +85,8 @@ void animationTask(void* parameter) {
             Animations::drawLoading(display);
         } else if (isSetupMode) {
             Animations::drawSetupMode(display);
+        } else if (isBin) {
+            Animations::drawBinImage(display, color);
         } else {
             Animations::drawPulse(display, color);
         }

@@ -11,6 +11,17 @@ const uint8_t Animations::exclamation[8][8] = {
     {2,0,0,1,1,0,0,2}
 };
 
+const uint8_t Animations::binImage[8][8] = {
+    {0,0,1,1,1,1,0,0},
+    {1,1,1,1,1,1,1,1},
+    {0,1,0,0,0,0,1,0},
+    {0,1,0,1,1,0,1,0},
+    {0,1,0,0,0,0,1,0},
+    {0,1,0,1,1,0,1,0},
+    {0,1,0,0,0,0,1,0},
+    {0,1,1,1,1,1,1,0}
+};
+
 int Animations::brightnessTick = 0;
 int Animations::loadingPos = 0;
 int Animations::animationCounter = 0;
@@ -145,6 +156,24 @@ void Animations::drawPulse(DisplayHandler& display, Color color) {
                     (color.b * brightness) / 64
                 )
             );
+        }
+    }
+}
+
+void Animations::drawBinImage(DisplayHandler& display, Color color) {
+    uint8_t brightness = calculateBrightness();
+
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            if (binImage[row][col] == 1) {
+                display.matrix.setPixelColor(row * 8 + col,
+                    display.matrix.Color(
+                        (color.r * brightness) / 64,
+                        (color.g * brightness) / 64,
+                        (color.b * brightness) / 64
+                    )
+                );
+            }
         }
     }
 }
