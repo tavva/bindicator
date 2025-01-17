@@ -32,7 +32,9 @@ const char* SetupServer::getSetupPage() {
             "<title>Bindicator Setup</title>"
             "<style>"
                 "body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e1e; color: #ffffff; }"
-                ".setup-section { margin-bottom: 30px; padding: 20px; border: 1px solid #333; border-radius: 5px; position: relative; background-color: #252525; }"
+                ".setup-section { display: flex; flex-direction: column; margin-bottom: 30px; padding: 20px; border: 1px solid #333; border-radius: 5px; position: relative; background-color: #252525; }"
+                ".section-content { flex: 1; }"
+                ".status-cell { margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; }"
                 ".setup-section::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 5px 0 0 5px; }"
                 ".setup-section.incomplete::before { background-color: #f44336; }"
                 ".setup-section.complete::before { background-color: #4CAF50; }"
@@ -60,15 +62,17 @@ const char* SetupServer::getSetupPage() {
 
     // WiFi Section
     page += "<div class='setup-section" + sectionClass + "'>"
-            "<h2><span class='step-number'>1</span> WiFi Setup</h2>"
-            "<form action='/save' method='POST'>"
-                "<label for='ssid'>WiFi Name:</label>"
-                "<input type='text' id='ssid' name='ssid' value='" + config.wifi_ssid + "'>"
-                "<label for='password'>WiFi Password:</label>"
-                "<input type='password' id='password' name='password' value='" + config.wifi_password + "'>"
-                "<button type='submit'>Save WiFi Settings</button>"
-            "</form>"
-            "<p class='status'>Status: " + wifiStatus + "</p>"
+            "<div class='section-content'>"
+                "<h2><span class='step-number'>1</span> WiFi Setup</h2>"
+                "<form action='/save' method='POST'>"
+                    "<label for='ssid'>WiFi Name:</label>"
+                    "<input type='text' id='ssid' name='ssid' value='" + config.wifi_ssid + "'>"
+                    "<label for='password'>WiFi Password:</label>"
+                    "<input type='password' id='password' name='password' value='" + config.wifi_password + "'>"
+                    "<button type='submit'>Save WiFi Settings</button>"
+                "</form>"
+            "</div>"
+            "<div class='status-cell'>Status: " + wifiStatus + "</div>"
             "</div>";
 
     // OAuth Section
@@ -79,9 +83,11 @@ const char* SetupServer::getSetupPage() {
     page += "<div class='setup-section" +
             String(oauthHandler.isAuthorized() ? " complete" : " incomplete") +
             String(config.wifi_ssid.isEmpty() ? " disabled" : "") + "'>" +
-            "<h2><span class='step-number'>2</span> Google Calendar Setup</h2>" +
-            oauthContent +
-            "<p class='status'>Status: " + oauthStatus + "</p>"
+            "<div class='section-content'>"
+                "<h2><span class='step-number'>2</span> Google Calendar Setup</h2>" +
+                oauthContent +
+            "</div>"
+            "<div class='status-cell'>Status: " + oauthStatus + "</div>"
             "</div>";
 
     // Setup complete
@@ -94,29 +100,31 @@ const char* SetupServer::getSetupPage() {
     }
 
     // Calendar Section
-    page += "<div class='setup-section" +
+    page += "<div id='calendar-section' class='setup-section" +
             String(!oauthHandler.isAuthorized() ? " disabled" : " complete") + "'>" +
-            "<h2><span class='step-number'>3</span> Calendar Settings</h2>"
-            "<form action='/save-calendar' method='POST'>"
-                "<label for='calendar_id'>Select Calendar:</label>"
-                "<div id='calendar-select-container'>"
-                    "<select id='calendar_id' name='calendar_id' style='display:none;' onchange='updateCalendar(event)'>"
-                        "<option value='" + ConfigManager::getCalendarId() + "' selected>" +
-                        (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
-                        "</option>"
-                    "</select>"
-                    "<div id='calendar-loading'>Loading calendars...</div>"
+            "<div class='section-content'>"
+                "<h2><span class='step-number'>3</span> Calendar Settings</h2>"
+                "<form action='/save-calendar' method='POST'>"
+                    "<label for='calendar_id' style='margin-bottom: 10px; display: block;'>Select Calendar:</label>"
+                    "<div id='calendar-select-container'>"
+                        "<select id='calendar_id' name='calendar_id' style='display:none;' onchange='updateCalendar(event)'>"
+                            "<option value='" + ConfigManager::getCalendarId() + "' selected>" +
+                            (ConfigManager::getCalendarId() == "primary" ? "Main Calendar" : ConfigManager::getCalendarId()) +
+                            "</option>"
+                        "</select>"
+                        "<div id='calendar-loading'>Loading calendars...</div>"
+                    "</div>"
+                    "<p class='help-text'>Choose which calendar contains your bin collection schedule</p>"
+                "</form>"
+                "<div id='upcoming-bins' style='margin-top: 15px; display: none;'>"
+                    "<hr style='border: none; border-top: 1px solid #444; margin: 15px 0;'>"
+                    "<h3 style='color: #ffffff; margin: 0 0 10px 0;'>Upcoming Collections</h3>"
+                    "<ul id='upcoming-bins-list' style='color: #888; font-size: 0.9em; margin: 0; padding-left: 20px;'>"
+                        "<li>Loading...</li>"
+                    "</ul>"
                 "</div>"
-                "<p class='help-text'>Choose which calendar contains your bin collection schedule</p>"
-            "</form>"
-            "<p class='status'>Status: " + calendarStatus + "</p>"
-            "<div id='upcoming-bins' style='margin-top: 15px; display: none;'>"
-                "<hr style='border: none; border-top: 1px solid #444; margin: 15px 0;'>"
-                "<h3 style='color: #ffffff; margin: 0 0 10px 0;'>Upcoming Collections</h3>"
-                "<ul id='upcoming-bins-list' style='color: #888; font-size: 0.9em; margin: 0; padding-left: 20px;'>"
-                    "<li>Loading...</li>"
-                "</ul>"
             "</div>"
+            "<div class='status-cell'>Status: " + calendarStatus + "</div>"
             "</div>";
 
     // Device Control Section
@@ -146,52 +154,54 @@ const char* SetupServer::getSetupPage() {
                 "}"
             "</script>"
             "<script>"
-                "if (document.querySelector('#calendar-select-container')) {"
-                    "fetch('/calendars')"
-                        ".then(response => response.json())"
-                        ".then(data => {"
-                            "const select = document.querySelector('#calendar_id');"
-                            "select.innerHTML = '';"
+                "fetch('/calendars')"
+                    ".then(response => response.json())"
+                    ".then(data => {"
+                        "const select = document.querySelector('#calendar_id');"
+                        "select.innerHTML = '';"
+                        "const currentId = '" + ConfigManager::getCalendarId() + "';"
 
-                            "const primaryOption = document.createElement('option');"
-                            "primaryOption.value = 'primary';"
-                            "primaryOption.text = 'Main Calendar';"
-                            "primaryOption.selected = currentId === 'primary';"
-                            "select.appendChild(primaryOption);"
+                        "const primaryOption = document.createElement('option');"
+                        "primaryOption.value = 'primary';"
+                        "primaryOption.text = 'Main Calendar';"
+                        "primaryOption.selected = currentId === 'primary';"
+                        "select.appendChild(primaryOption);"
 
-                            "data.items.forEach(cal => {"
-                                "if (cal.id !== 'primary') {"
-                                    "const option = document.createElement('option');"
-                                    "option.value = cal.id;"
-                                    "option.text = cal.summary;"
-                                    "option.selected = cal.id === currentId;"
-                                    "select.appendChild(option);"
-                                "}"
-                            "});"
-
-                            "const statusElement = document.querySelector('#calendar-status');"
-                            "const selectedCalendar = data.items.find(cal => cal.id === currentId) || "
-                                "{summary: currentId === 'primary' ? 'Main Calendar' : 'Unknown Calendar'};"
-                            "statusElement.textContent = 'Configured (' + selectedCalendar.summary + ')';"
-
-                            "document.querySelector('#calendar-loading').style.display = 'none';"
-                            "select.style.display = 'block';"
-                        "})"
-                        ".catch(error => {"
-                            "document.querySelector('#calendar-loading').textContent = 'Error loading calendars';"
-                            "console.error('Error:', error);"
+                        "data.items.forEach(cal => {"
+                            "if (cal.id !== 'primary') {"
+                                "const option = document.createElement('option');"
+                                "option.value = cal.id;"
+                                "option.text = cal.summary;"
+                                "option.selected = cal.id === currentId;"
+                                "select.appendChild(option);"
+                            "}"
                         "});"
-                "}"
-            "</script>"
-            "<script>"
+
+                        "const selectedCalendar = data.items.find(cal => cal.id === currentId) || "
+                            "{summary: currentId === 'primary' ? 'Main Calendar' : 'Unknown Calendar'};"
+                        "const statusElement = document.querySelector('#calendar-section .status-cell');"
+                        "statusElement.textContent = 'Status: Configured (' + selectedCalendar.summary + ')';"
+
+                        "document.querySelector('#calendar-loading').style.display = 'none';"
+                        "select.style.display = 'block';"
+
+                        "if (currentId) {"
+                            "updateCalendar(new Event('load'));"
+                        "}"
+                    "})"
+                    ".catch(error => {"
+                        "document.querySelector('#calendar-loading').textContent = 'Error loading calendars';"
+                        "console.error('Error:', error);"
+                    "});"
+
                 "function updateCalendar(event) {"
                     "event.preventDefault();"
                     "const select = document.querySelector('#calendar_id');"
                     "const calendarId = select.value;"
                     "const selectedOption = select.options[select.selectedIndex];"
 
-                    "const statusElement = document.querySelector('#calendar-status');"
-                    "statusElement.textContent = 'Saving...';"
+                    "const statusElement = document.querySelector('#calendar-section .status-cell');"
+                    "statusElement.textContent = 'Status: Saving...';"
 
                     "const upcomingDiv = document.querySelector('#upcoming-bins');"
                     "const upcomingList = document.querySelector('#upcoming-bins-list');"
@@ -206,7 +216,7 @@ const char* SetupServer::getSetupPage() {
                     ".then(response => {"
                         "if (!response.ok) throw new Error('Failed to save calendar');"
 
-                        "statusElement.textContent = 'Configured (' + selectedOption.text + ')';"
+                        "statusElement.textContent = 'Status: Configured (' + selectedOption.text + ')';"
 
                         "return fetch('/upcoming-bins');"
                     "})"
@@ -232,11 +242,6 @@ const char* SetupServer::getSetupPage() {
                     "});"
 
                     "return false;"
-                "}"
-            "</script>"
-            "<script>"
-                "if (currentId) {"
-                    "updateCalendar(new Event('load'));"
                 "}"
             "</script>"
         "</body>"
