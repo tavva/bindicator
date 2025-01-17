@@ -76,18 +76,20 @@ void startSetupMode() {
 
     delay(100);
 
-    // default IP is 192.168.4.1
-    if (!WiFi.softAP("Bindicator Setup", AP_PASSWORD)) {
-        Serial.println("AP Start Failed");
-        return;
-    }
-
     if (ConfigManager::isConfigured()) {
         Serial.println("Connecting to main network...");
         if (tryWiFiConnection()) {
             Serial.println("\nConnected to main network");
             Serial.print("Station IP Address: ");
             Serial.println(WiFi.localIP());
+        }
+    }
+
+    if (WiFi.status() != WL_CONNECTED) {
+        // default IP is 192.168.4.1
+        if (!WiFi.softAP("Bindicator Setup", AP_PASSWORD)) {
+            Serial.println("AP Start Failed");
+            return;
         }
     }
 
