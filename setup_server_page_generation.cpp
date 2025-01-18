@@ -59,8 +59,11 @@ const char* SetupServer::getSetupPage() {
                     ".setup-section div[style*=\"display: flex\"] button { margin-right: 0; }"
                 "}"
 
-                ".setup-complete { margin: 30px 0; padding: 30px; border: 2px solid #4CAF50; border-radius: 10px; background-color: #252525; text-align: center; }"
-                "@media (max-width: 640px) { .setup-complete { padding: 20px; margin: 20px 0; } }"
+                ".setup-complete { margin: 30px auto; padding: 30px; border: 2px solid #4CAF50; border-radius: 10px; background-color: #252525; text-align: center; max-width: 500px; }"
+                "@media (max-width: 640px) { .setup-complete { padding: 20px; margin: 20px auto; } }"
+
+                ".setup-complete h2 { justify-content: center; margin-bottom: 20px; }"
+                ".setup-complete p { margin: 10px 0; }"
 
                 ".launch-button { background-color: #4CAF50; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; margin-top: 20px; }"
                 "@media (max-width: 640px) { .launch-button { padding: 12px 24px; font-size: 16px; width: 100%; } }"
