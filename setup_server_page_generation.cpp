@@ -95,6 +95,7 @@ const char* SetupServer::getSetupPage() {
         page += "<div id='setupComplete' class='setup-complete'>"
                 "<h2>Your Bindicator is Ready!</h2>"
                 "<p>Setup is complete and your Bindicator is configured.</p>"
+                "<p><small>If your bin events are not on your main calendar, you can change the calendar in the calendar settings section below.</small></p>"
                 "<button class='launch-button' onclick='restartDevice()'>Launch Bindicator</button>"
                 "</div>";
     }
