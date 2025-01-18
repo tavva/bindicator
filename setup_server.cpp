@@ -55,12 +55,38 @@ void SetupServer::handleSave() {
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WiFi Settings Saved</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
-        .message { margin: 20px 0; padding: 20px; border: 1px solid #4CAF50; border-radius: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            body { padding: 15px; }
+            h1 { font-size: 24px; }
+        }
+        .message {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+        }
         .urls { margin: 20px 0; }
-        .url { font-family: monospace; background: #f5f5f5; padding: 5px 10px; border-radius: 3px; }
+        .url {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        @media (max-width: 400px) {
+            .message { padding: 15px; }
+            h1 { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
