@@ -1,6 +1,7 @@
 #include "secrets.h"
 #include "calendar_handler.h"
 #include "config_manager.h"
+#include "utils.h"
 
 CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler)
     : oauth(oauthHandler) {}
@@ -34,8 +35,8 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
 
     HTTPClient http;
     String url = CALENDAR_API_BASE + ConfigManager::getCalendarId() + "/events";
-    url += "?timeMin=" + urlEncode(timeMin);
-    url += "&timeMax=" + urlEncode(timeMax);
+    url += "?timeMin=" + Utils::urlEncode(timeMin);
+    url += "&timeMax=" + Utils::urlEncode(timeMax);
     url += "&singleEvents=true";
 
     Serial.println("Calendar request URL: " + url);
@@ -79,35 +80,6 @@ bool CalendarHandler::checkForBinEvents(bool& hasRecycling, bool& hasRubbish) {
 
     http.end();
     return true;
-}
-
-String CalendarHandler::urlEncode(const String& str) {
-    String encodedString = "";
-    char c;
-    char code0;
-    char code1;
-    for (int i = 0; i < str.length(); i++) {
-        c = str.charAt(i);
-        if (c == ' ') {
-            encodedString += '+';
-        } else if (isalnum(c)) {
-            encodedString += c;
-        } else {
-            code1 = (c & 0xf) + '0';
-            if ((c & 0xf) > 9) {
-                code1 = (c & 0xf) - 10 + 'A';
-            }
-            c = (c >> 4) & 0xf;
-            code0 = c + '0';
-            if (c > 9) {
-                code0 = c - 10 + 'A';
-            }
-            encodedString += '%';
-            encodedString += code0;
-            encodedString += code1;
-        }
-    }
-    return encodedString;
 }
 
 String CalendarHandler::getISODate(int daysOffset) {

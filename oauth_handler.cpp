@@ -1,5 +1,6 @@
 #include "oauth_handler.h"
 #include <WiFi.h>
+#include "utils.h"
 
 OAuthHandler::OAuthHandler(const String& clientId, const String& clientSecret, const String& redirectUri)
     : GOOGLE_CLIENT_ID(clientId),
@@ -43,8 +44,7 @@ void OAuthHandler::handleOAuthRequest(WebServer* server) {
 
 String OAuthHandler::getAuthUrl() {
     String deviceIP = WiFi.localIP().toString();
-
-    String state = "device_ip=" + urlEncode(deviceIP) + "&callback_path=/oauth_callback";
+    String state = "device_ip=" + Utils::urlEncode(deviceIP) + "&callback_path=/oauth_callback";
 
     String url = AUTH_ENDPOINT;
     url += "?client_id=" + GOOGLE_CLIENT_ID;
@@ -147,35 +147,6 @@ void OAuthHandler::saveRefreshToken(const String& token) {
 String OAuthHandler::loadRefreshToken() {
     preferences.begin("oauth", false);
     return preferences.getString("refresh_token", "");
-}
-
-String OAuthHandler::urlEncode(const String& str) {
-    String encoded = "";
-    char c;
-    char code0;
-    char code1;
-    for (int i = 0; i < str.length(); i++) {
-        c = str.charAt(i);
-        if (c == ' ') {
-            encoded += '+';
-        } else if (isalnum(c)) {
-            encoded += c;
-        } else {
-            code1 = (c & 0xf) + '0';
-            if ((c & 0xf) > 9) {
-                code1 = (c & 0xf) - 10 + 'A';
-            }
-            c = (c >> 4) & 0xf;
-            code0 = c + '0';
-            if (c > 9) {
-                code0 = c - 10 + 'A';
-            }
-            encoded += '%';
-            encoded += code0;
-            encoded += code1;
-        }
-    }
-    return encoded;
 }
 
 void OAuthHandler::handleTokenRequest(WebServer* server) {
