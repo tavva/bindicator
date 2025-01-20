@@ -2,3 +2,6 @@ secrets.cpp
 .vscode
 credentials.json
 .mise.toml
+
+*.o
+tests/unit/utils_test
