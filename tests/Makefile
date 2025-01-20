@@ -1,10 +1,17 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -I./mocks -I.. $(shell pkg-config --cflags gtest)
+CXXFLAGS = -std=c++14 -Wall -I./mocks -I./mocks/freertos -I.. $(shell pkg-config --cflags gtest)
 GTEST_FLAGS = $(shell pkg-config --libs gtest gtest_main) -pthread
 
-TEST_SRCS = unit/utils_test.cpp ../utils.cpp
+TEST_SRCS = unit/utils_test.cpp \
+            unit/bindicator_test.cpp \
+            mocks/freertos_mock.cpp \
+            mocks/Arduino.cpp \
+            mocks/test_utils.cpp \
+            ../utils.cpp \
+            ../bindicator.cpp
+
 TEST_OBJS = $(TEST_SRCS:.cpp=.o)
-TEST_BINS = unit/utils_test
+TEST_BINS = unit/test_runner
 
 .PHONY: all clean test
 
@@ -17,7 +24,7 @@ $(TEST_BINS): $(TEST_OBJS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 test: $(TEST_BINS)
-	./unit/utils_test
+	./unit/test_runner
 
 clean:
 	rm -f $(TEST_OBJS) $(TEST_BINS) 

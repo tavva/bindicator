@@ -2,7 +2,11 @@
 #define ARDUINO_H
 
 #include <string>
+#include <iostream>
+#include <stdarg.h>
+#include "time_mock.h"
 
+// Mock String class first
 class String {
 public:
     String() {}
@@ -32,7 +36,6 @@ public:
 
     operator std::string() const { return data; }
 
-    // Add comparison operators
     bool operator==(const String& other) const { return data == other.data; }
     bool operator==(const char* str) const { return data == str; }
     bool operator!=(const String& other) const { return !(*this == other); }
@@ -42,7 +45,7 @@ private:
     std::string data;
 };
 
-// Non-member operator for comparing char* with String
+// Non-member operators
 inline bool operator==(const char* str, const String& string) {
     return string == str;
 }
@@ -50,5 +53,20 @@ inline bool operator==(const char* str, const String& string) {
 inline bool operator!=(const char* str, const String& string) {
     return string != str;
 }
+
+// Then Serial class
+class SerialClass {
+public:
+    void println(const char* message) { std::cout << message << std::endl; }
+    void println(const String& message) { std::cout << message.c_str() << std::endl; }
+    void printf(const char* format, ...) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+};
+
+extern SerialClass Serial;
 
 #endif
