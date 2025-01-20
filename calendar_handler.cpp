@@ -138,7 +138,7 @@ bool CalendarHandler::getUpcomingBinDays(JsonDocument& events) {
 
     HTTPClient http;
     String calendarId = ConfigManager::getCalendarId();
-    String url = CALENDAR_API_BASE + urlEncode(calendarId) + "/events";
+    String url = CALENDAR_API_BASE + Utils::urlEncode(calendarId) + "/events";
 
     String timeMin = getISODate();
     String timeMax = getISODate(DAYS_TO_CHECK_BIN_SCHEDULE);
