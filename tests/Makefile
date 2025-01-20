@@ -4,11 +4,13 @@ GTEST_FLAGS = $(shell pkg-config --libs gtest gtest_main) -pthread
 
 TEST_SRCS = unit/utils_test.cpp \
             unit/bindicator_test.cpp \
+            unit/time_manager_test.cpp \
             mocks/freertos_mock.cpp \
             mocks/Arduino.cpp \
-            mocks/test_utils.cpp \
+            mocks/time_mock.cpp \
             ../utils.cpp \
-            ../bindicator.cpp
+            ../bindicator.cpp \
+            ../time_manager.cpp
 
 TEST_OBJS = $(TEST_SRCS:.cpp=.o)
 TEST_BINS = unit/test_runner

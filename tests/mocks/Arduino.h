@@ -54,17 +54,40 @@ inline bool operator!=(const char* str, const String& string) {
     return string != str;
 }
 
-// Then Serial class
+// Then Serial class with output control
 class SerialClass {
 public:
-    void println(const char* message) { std::cout << message << std::endl; }
-    void println(const String& message) { std::cout << message.c_str() << std::endl; }
-    void printf(const char* format, ...) {
-        va_list args;
-        va_start(args, format);
-        vprintf(format, args);
-        va_end(args);
+    SerialClass() : suppress_output(false) {}
+
+    void suppressOutput(bool suppress) { suppress_output = suppress; }
+
+    void print(const char* message) {
+        if (!suppress_output) std::cout << message;
     }
+
+    void print(const String& message) {
+        if (!suppress_output) std::cout << message.c_str();
+    }
+
+    void println(const char* message) {
+        if (!suppress_output) std::cout << message << std::endl;
+    }
+
+    void println(const String& message) {
+        if (!suppress_output) std::cout << message.c_str() << std::endl;
+    }
+
+    void printf(const char* format, ...) {
+        if (!suppress_output) {
+            va_list args;
+            va_start(args, format);
+            vprintf(format, args);
+            va_end(args);
+        }
+    }
+
+private:
+    bool suppress_output;
 };
 
 extern SerialClass Serial;
