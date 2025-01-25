@@ -13,6 +13,10 @@ uint8_t RGB_Data1[64][3];
 
 QueueHandle_t commandQueue;
 
+const uint32_t CALENDAR_CHECK_INTERVAL_MS = 3600000;  // 1 hour
+
+extern CalendarHandler calendar;
+
 void animationTask(void* parameter) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(30);
@@ -108,28 +112,24 @@ void animationTask(void* parameter) {
 }
 
 void calendarTask(void* parameter) {
-    extern CalendarHandler calendar;
+    const TickType_t xDelay = pdMS_TO_TICKS(CALENDAR_CHECK_INTERVAL_MS);
 
-    Serial.println("Calendar task started");
-
-    Command cmd = CMD_SHOW_LOADING;
-    xQueueSend(commandQueue, &cmd, 0);
-
-    // Delay to let wifi connect
+    // Initial delay to allow system to stabilize and load state
     vTaskDelay(pdMS_TO_TICKS(5000));
 
-    struct tm timeinfo;
-    while (!getLocalTime(&timeinfo)) {
-        Serial.println("Waiting for time sync...");
-        setupTime();
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-    Serial.println("Time synchronized!");
-
-    while(true) {
-        if (!Bindicator::shouldCheckCalendar()) {
-            return;
+    while (true) {
+        while (WiFi.status() != WL_CONNECTED) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
+
+        Serial.println("\nCalendar check cycle starting");
+
+        if (!Bindicator::shouldCheckCalendar()) {
+            Serial.println("Skipping calendar check - bin already taken out or wrong time");
+            vTaskDelay(xDelay);
+            continue;
+        }
+
         if (WiFi.status() == WL_CONNECTED) {
             Serial.println("Checking calendar...");
             bool hasRecycling = false;
@@ -145,6 +145,8 @@ void calendarTask(void* parameter) {
                 }
             } else {
                 Serial.println("Failed to check calendar");
+                Command cmd = CMD_SHOW_ERROR_API;
+                xQueueSend(commandQueue, &cmd, 0);
             }
         } else {
             Serial.println("WiFi not connected, skipping calendar check");
@@ -152,6 +154,6 @@ void calendarTask(void* parameter) {
             xQueueSend(commandQueue, &cmd, 0);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(3600000));
+        vTaskDelay(xDelay);
     }
 }

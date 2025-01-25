@@ -37,33 +37,38 @@ void Bindicator::setBinType(BinType type) {
     Serial.printf("setBinType: type=%d, currentType=%d, binTakenOut=%d\n",
                  static_cast<int>(type), static_cast<int>(currentBinType), binTakenOut);
 
-    // If the bin type hasn't changed and it's already been taken out,
-    // don't change the animation
-    if (type == currentBinType && binTakenOut) {
-        Serial.println("setBinType: Same type and taken out, skipping command");
+    // If the bin type hasn't changed, keep existing state
+    if (type == currentBinType) {
+        Serial.println("setBinType: Same type, keeping existing state");
         return;
     }
 
-    Command cmd;
-    switch(type) {
-        case BinType::RECYCLING:
-            cmd = CMD_SHOW_RECYCLING;
-            break;
-        case BinType::RUBBISH:
-            cmd = CMD_SHOW_RUBBISH;
-            break;
-        default:
-            cmd = CMD_SHOW_NEITHER;
-            break;
-    }
+    // Only send command if we're changing to or from a non-NONE type
+    if (type != BinType::NONE || currentBinType != BinType::NONE) {
+        Command cmd;
+        switch(type) {
+            case BinType::RECYCLING:
+                cmd = CMD_SHOW_RECYCLING;
+                break;
+            case BinType::RUBBISH:
+                cmd = CMD_SHOW_RUBBISH;
+                break;
+            default:
+                cmd = CMD_SHOW_NEITHER;
+                break;
+        }
 
-    Serial.printf("setBinType: Sending command %d\n", cmd);
-    sendCommand(cmd);
+        Serial.printf("setBinType: Sending command %d\n", cmd);
+        sendCommand(cmd);
+    }
 
     currentBinType = type;
     ConfigManager::setBinType(type);
-    binTakenOut = false;
-    ConfigManager::setBinTakenOut(false);
+
+    if (binTakenOut) {
+        binTakenOut = false;
+        ConfigManager::setBinTakenOut(false);
+    }
 }
 
 bool Bindicator::isAfterResetTime() {
@@ -79,6 +84,12 @@ void Bindicator::reset() {
     binTakenOut = false;
     currentBinType = BinType::NONE;
     ConfigManager::setBinTakenOut(false);
+    ConfigManager::setBinType(BinType::NONE);
+
+    if (currentBinType != BinType::NONE) {
+        Command cmd = CMD_SHOW_NEITHER;
+        sendCommand(cmd);
+    }
 }
 
 BinType Bindicator::getCurrentBinType() {
@@ -95,14 +106,11 @@ void Bindicator::initializeFromStorage() {
     Serial.printf("initializeFromStorage: binTakenOut=%d, currentBinType=%d\n",
                  binTakenOut, static_cast<int>(currentBinType));
 
-    // Don't send any command if there's no bin type set yet
     if (currentBinType == BinType::NONE) {
         Serial.println("initializeFromStorage: No bin type set, skipping command");
         return;
     }
 
-    // If the bin was taken out, show completion animation
-    // Otherwise show the appropriate bin animation
     Command cmd = binTakenOut ? CMD_SHOW_COMPLETED :
         (currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH);
     Serial.printf("initializeFromStorage: Sending command %d\n", cmd);

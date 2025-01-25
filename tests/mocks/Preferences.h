@@ -40,6 +40,19 @@ public:
         return true;
     }
 
+    int32_t getInt(const char* key, int32_t defaultValue = 0) {
+        auto it = storage.find(key);
+        if (it != storage.end()) {
+            return std::stoi(it->second);
+        }
+        return defaultValue;
+    }
+
+    bool putInt(const char* key, int32_t value) {
+        storage[key] = std::to_string(value);
+        return true;
+    }
+
     void remove(const char* key) {
         storage.erase(key);
     }
