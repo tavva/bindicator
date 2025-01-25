@@ -6,6 +6,7 @@
 #include <ArduinoJson.h>
 #include "oauth_handler.h"
 #include "tasks.h"
+#include "bin_type.h"
 
 class CalendarHandler {
     public:

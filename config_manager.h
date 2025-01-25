@@ -2,7 +2,12 @@
 #define CONFIG_MANAGER_H
 
 #include <Arduino.h>
-#include <Preferences.h>
+#include "bin_type.h"
+#ifdef ESP32
+    #include <Preferences.h>
+#else
+    #include "Preferences.h"
+#endif
 
 class ConfigManager {
     public:
@@ -20,12 +25,20 @@ class ConfigManager {
         static String getCalendarId();
         static bool setCalendarId(const String& id);
 
+        static bool getBinTakenOut();
+        static bool setBinTakenOut(bool taken);
+
+        static BinType getBinType();
+        static bool setBinType(BinType type);
+
     private:
         static const char* PREF_NAMESPACE;
         static const char* KEY_WIFI_SSID;
         static const char* KEY_WIFI_PASS;
         static const char* KEY_FORCED_SETUP;
         static const char* KEY_CALENDAR_ID;
+        static const char* KEY_BIN_TAKEN_OUT;
+        static const char* KEY_BIN_TYPE;
 
         static Preferences preferences;
         static bool prefsInitialized;

@@ -15,6 +15,8 @@
 #include "config_manager.h"
 #include "serial_commands.h"
 #include "button_handler.h"
+#include "bindicator.h"
+#include "bin_type.h"
 
 OAuthHandler oauth(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 CalendarHandler calendar(oauth);
@@ -163,9 +165,9 @@ void setup() {
     }
 
     button.begin();
+
+    Bindicator::initializeFromStorage();
 }
-
-
 
 void loop() {
     SerialCommands::handle();

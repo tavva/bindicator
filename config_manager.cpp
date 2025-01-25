@@ -7,6 +7,8 @@ const char* ConfigManager::KEY_WIFI_SSID = "wifi_ssid";
 const char* ConfigManager::KEY_WIFI_PASS = "wifi_pass";
 const char* ConfigManager::KEY_FORCED_SETUP = "force_setup";
 const char* ConfigManager::KEY_CALENDAR_ID = "calendar_id";
+const char* ConfigManager::KEY_BIN_TAKEN_OUT = "bin_taken";
+const char* ConfigManager::KEY_BIN_TYPE = "bin_type";
 
 void ConfigManager::begin() {
     if (!prefsInitialized) {
@@ -73,4 +75,24 @@ String ConfigManager::getCalendarId() {
 bool ConfigManager::setCalendarId(const String& id) {
     begin();
     return preferences.putString(KEY_CALENDAR_ID, id);
+}
+
+bool ConfigManager::getBinTakenOut() {
+    begin();
+    return preferences.getBool(KEY_BIN_TAKEN_OUT, false);
+}
+
+bool ConfigManager::setBinTakenOut(bool taken) {
+    begin();
+    return preferences.putBool(KEY_BIN_TAKEN_OUT, taken);
+}
+
+BinType ConfigManager::getBinType() {
+    begin();
+    return static_cast<BinType>(preferences.getInt(KEY_BIN_TYPE, static_cast<int>(BinType::NONE)));
+}
+
+bool ConfigManager::setBinType(BinType type) {
+    begin();
+    return preferences.putInt(KEY_BIN_TYPE, static_cast<int>(type));
 }

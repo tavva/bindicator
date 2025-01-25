@@ -48,12 +48,12 @@ String OAuthHandler::getAuthUrl() {
 
     String url = AUTH_ENDPOINT;
     url += "?client_id=" + GOOGLE_CLIENT_ID;
-    url += "&redirect_uri=" + urlEncode(GOOGLE_REDIRECT_URI);
+    url += "&redirect_uri=" + Utils::urlEncode(GOOGLE_REDIRECT_URI);
     url += "&response_type=code";
-    url += "&scope=" + urlEncode(SCOPE);
+    url += "&scope=" + Utils::urlEncode(SCOPE);
     url += "&access_type=offline";
     url += "&prompt=consent";
-    url += "&state=" + urlEncode(state);
+    url += "&state=" + Utils::urlEncode(state);
     return url;
 }
 
@@ -62,10 +62,10 @@ bool OAuthHandler::exchangeAuthCode(const String& code, String& error) {
     http.begin(TOKEN_ENDPOINT);
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    String post_data = "code=" + code;
+    String post_data = "code=" + Utils::urlEncode(code);
     post_data += "&client_id=" + GOOGLE_CLIENT_ID;
     post_data += "&client_secret=" + GOOGLE_CLIENT_SECRET;
-    post_data += "&redirect_uri=" + urlEncode(GOOGLE_REDIRECT_URI);
+    post_data += "&redirect_uri=" + Utils::urlEncode(GOOGLE_REDIRECT_URI);
     post_data += "&grant_type=authorization_code";
 
     int httpCode = http.POST(post_data);

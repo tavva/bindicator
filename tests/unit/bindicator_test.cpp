@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "bindicator.h"
 #include "tasks.h"
+#include "bin_type.h"
 
 // Mock the command queue
 QueueHandle_t commandQueue;
@@ -64,4 +65,55 @@ TEST_F(BindicatorTest, BinTypeManagement) {
     Command cmd;
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
+}
+
+TEST_F(BindicatorTest, BinTakenOutPersistsThroughRestart) {
+    // Set initial state
+    Bindicator::setBinType(BinType::RECYCLING);
+    Command cmd;
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
+
+    // Mark bin as taken out
+    Bindicator::handleButtonPress();
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_COMPLETED);
+    EXPECT_TRUE(Bindicator::isBinTakenOut());
+
+    // Simulate restart by reinitializing
+    Bindicator::initializeFromStorage();
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_COMPLETED);
+    EXPECT_TRUE(Bindicator::isBinTakenOut());
+
+    // Calendar check confirms same bin - should stay completed
+    Bindicator::setBinType(BinType::RECYCLING);
+    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));  // No new command
+    EXPECT_TRUE(Bindicator::isBinTakenOut());
+}
+
+TEST_F(BindicatorTest, BinTakenOutResetsWithNewBinType) {
+    // Set initial state and mark as taken out
+    Bindicator::setBinType(BinType::RECYCLING);
+    Command cmd;
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    Bindicator::handleButtonPress();
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the COMPLETED command
+    EXPECT_TRUE(Bindicator::isBinTakenOut());
+
+    // New bin type should reset taken out status
+    Bindicator::setBinType(BinType::RUBBISH);
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_RUBBISH);
+    EXPECT_FALSE(Bindicator::isBinTakenOut());
+}
+
+TEST_F(BindicatorTest, InitializeFromStorageWithNoBinType) {
+    // Start with no bin type
+    Bindicator::reset();
+    Command cmd;
+
+    // Initialize should not send any command
+    Bindicator::initializeFromStorage();
+    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));
 }

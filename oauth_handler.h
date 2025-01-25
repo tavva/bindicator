@@ -39,7 +39,6 @@ class OAuthHandler {
         void handleTokenRequest(WebServer* server);
         bool refreshAccessToken();
         void saveRefreshToken(const String& token);
-        String urlEncode(const String& str);
 };
 
 #endif

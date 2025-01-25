@@ -6,52 +6,56 @@
 #include <stdarg.h>
 #include "time_mock.h"
 
-// Mock String class first
+// String class
 class String {
 public:
-    String() {}
-    String(const char* str) : data(str) {}
-    String(const std::string& str) : data(str) {}
+    String() : str("") {}
+    String(const char* s) : str(s ? s : "") {}
+    String(const String& s) : str(s.str) {}
+    String(char c) : str(1, c) {}
 
-    char charAt(size_t index) const {
-        if (index < data.length()) {
-            return data[index];
-        }
-        return '\0';
+    bool isEmpty() const { return str.empty(); }
+    const char* c_str() const { return str.c_str(); }
+    unsigned int length() const { return str.length(); }
+
+    char charAt(unsigned int index) const {
+        if (index >= str.length()) return 0;
+        return str[index];
     }
 
-    size_t length() const { return data.length(); }
+    // Assignment operators
+    String& operator+=(const String& rhs) {
+        str += rhs.str;
+        return *this;
+    }
+
+    String& operator+=(const char* rhs) {
+        str += (rhs ? rhs : "");
+        return *this;
+    }
 
     String& operator+=(char c) {
-        data += c;
+        str += c;
         return *this;
     }
 
-    String& operator+=(const char* str) {
-        data += str;
-        return *this;
-    }
-
-    const char* c_str() const { return data.c_str(); }
-
-    operator std::string() const { return data; }
-
-    bool operator==(const String& other) const { return data == other.data; }
-    bool operator==(const char* str) const { return data == str; }
+    // Comparison operators
+    bool operator==(const String& other) const { return str == other.str; }
+    bool operator==(const char* other) const { return str == (other ? other : ""); }
     bool operator!=(const String& other) const { return !(*this == other); }
-    bool operator!=(const char* str) const { return !(*this == str); }
+    bool operator!=(const char* other) const { return !(*this == other); }
 
 private:
-    std::string data;
+    std::string str;
 };
 
-// Non-member operators
-inline bool operator==(const char* str, const String& string) {
-    return string == str;
+// Non-member operators for symmetrical comparison
+inline bool operator==(const char* lhs, const String& rhs) {
+    return rhs == lhs;
 }
 
-inline bool operator!=(const char* str, const String& string) {
-    return string != str;
+inline bool operator!=(const char* lhs, const String& rhs) {
+    return rhs != lhs;
 }
 
 // Then Serial class with output control

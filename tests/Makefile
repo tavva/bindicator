@@ -10,7 +10,8 @@ TEST_SRCS = unit/utils_test.cpp \
             mocks/time_mock.cpp \
             ../utils.cpp \
             ../bindicator.cpp \
-            ../time_manager.cpp
+            ../time_manager.cpp \
+            ../config_manager.cpp
 
 TEST_OBJS = $(TEST_SRCS:.cpp=.o)
 TEST_BINS = unit/test_runner

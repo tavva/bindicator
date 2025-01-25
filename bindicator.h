@@ -3,12 +3,7 @@
 
 #include <Arduino.h>
 #include "tasks.h"
-
-enum class BinType {
-    NONE,
-    RECYCLING,
-    RUBBISH
-};
+#include "bin_type.h"
 
 class Bindicator {
     public:
@@ -18,6 +13,7 @@ class Bindicator {
         static void reset();
         static BinType getCurrentBinType();
         static bool isBinTakenOut();
+        static void initializeFromStorage();
 
     private:
         static BinType currentBinType;

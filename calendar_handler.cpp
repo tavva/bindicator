@@ -2,6 +2,7 @@
 #include "calendar_handler.h"
 #include "config_manager.h"
 #include "utils.h"
+#include "bin_type.h"
 
 CalendarHandler::CalendarHandler(OAuthHandler& oauthHandler)
     : oauth(oauthHandler) {}

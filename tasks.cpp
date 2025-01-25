@@ -4,6 +4,7 @@
 #include "calendar_handler.h"
 #include "time_manager.h"
 #include "animations.h"
+#include "bin_type.h"
 #include "bindicator.h"
 #include <WiFi.h>
 
