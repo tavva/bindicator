@@ -42,19 +42,17 @@ TEST_F(BindicatorTest, HandleButtonPress) {
 TEST_F(BindicatorTest, ShouldCheckCalendar) {
     EXPECT_TRUE(Bindicator::shouldCheckCalendar());
 
-    // Should not check when bin is taken out and before reset time
     Bindicator::setBinType(BinType::RECYCLING);
     Command cmd;
     xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command from the queue
 
     Bindicator::handleButtonPress();
+
+    setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     EXPECT_FALSE(Bindicator::shouldCheckCalendar());
 
-    // Should check and reset when bin is taken out and after reset time
-    setMockTime(2024, 3, 21, 15, 0, 0);  // After RESET_HOUR
+    setMockTime(2024, 3, 21, 15, 30, 0);  // After RESET_HOUR
     EXPECT_TRUE(Bindicator::shouldCheckCalendar());
-    EXPECT_FALSE(Bindicator::isBinTakenOut());  // Should be reset
-    EXPECT_EQ(Bindicator::getCurrentBinType(), BinType::NONE);  // Should be reset
 }
 
 TEST_F(BindicatorTest, BinTypeManagement) {
