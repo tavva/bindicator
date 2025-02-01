@@ -12,7 +12,12 @@ void DisplayHandler::begin() {
     matrix.begin();
     matrix.setBrightness(BRIGHTNESS);
     matrix.clear();
+
+    for(int i = 0; i < MATRIX_WIDTH * MATRIX_HEIGHT; i++) {
+        matrix.setPixelColor(i, 0);
+    }
     matrix.show();
+    delay(50);
 }
 
 // Add this helper method to rotate pixel coordinates 180 degrees
