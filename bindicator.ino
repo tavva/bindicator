@@ -171,7 +171,6 @@ void setup() {
 
 void loop() {
     SerialCommands::handle();
-    button.handle();
 
     if (inSetupMode) {
         setupServer.handleClient();
