@@ -113,7 +113,8 @@ TEST_F(BindicatorTest, InitializeFromStorageWithNoBinType) {
     Bindicator::reset();
     Command cmd;
 
-    // Initialize should not send any command
+    // Initialize should send CMD_SHOW_NEITHER
     Bindicator::initializeFromStorage();
-    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
 }

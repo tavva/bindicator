@@ -117,13 +117,14 @@ void Bindicator::initializeFromStorage() {
     Serial.printf("initializeFromStorage: binTakenOut=%d, currentBinType=%d\n",
                  binTakenOutTime, static_cast<int>(currentBinType));
 
+    Command cmd;
     if (currentBinType == BinType::NONE) {
-        Serial.println("initializeFromStorage: No bin type set, skipping command");
-        return;
+        Serial.println("initializeFromStorage: No bin type set, showing neither screen");
+        cmd = CMD_SHOW_NEITHER;
+    } else {
+        cmd = binTakenOutTime > 0 ? CMD_SHOW_COMPLETED :
+            (currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH);
     }
-
-    Command cmd = binTakenOutTime > 0 ? CMD_SHOW_COMPLETED :
-        (currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH);
     Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
     sendCommand(cmd);
 }
