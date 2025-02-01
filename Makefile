@@ -26,7 +26,7 @@ upload:
 
 just-upload:
 	@${hr}
-	@echo *** JUST UPLOADING! ***
+	@echo JUST UPLOADING!
 	@${hr}
 	@${CLI} upload -p $(PORT) --fqbn $(BOARD) $(SKETCH)
 
