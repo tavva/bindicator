@@ -118,3 +118,46 @@ TEST_F(BindicatorTest, InitializeFromStorageWithNoBinType) {
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
 }
+
+TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
+    Command cmd;
+
+    // Scenario 1: Bin taken out and not after reset time
+    Bindicator::setBinType(BinType::RECYCLING);
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    Bindicator::handleButtonPress();
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the COMPLETED command
+    setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
+    Bindicator::initializeFromStorage();
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_COMPLETED);
+
+    // Scenario 2: Bin taken out and after reset time
+    setMockTime(2024, 3, 21, 15, 30, 0);  // After RESET_HOUR
+    Bindicator::initializeFromStorage();
+    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));  // Should keep loading screen
+
+    // Scenario 3: After reset time (no bin taken out)
+    Bindicator::reset();
+    Bindicator::setBinType(BinType::RECYCLING);
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    setMockTime(2024, 3, 21, 15, 30, 0);  // After RESET_HOUR
+    Bindicator::initializeFromStorage();
+    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));  // Should keep loading screen
+
+    // Scenario 4: No bin taken out, not after reset time, no bin type
+    Bindicator::reset();
+    setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
+    Bindicator::initializeFromStorage();
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
+
+    // Scenario 5: No bin taken out, not after reset time, has bin type
+    Bindicator::reset();
+    Bindicator::setBinType(BinType::RECYCLING);
+    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
+    Bindicator::initializeFromStorage();
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
+    EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
+}

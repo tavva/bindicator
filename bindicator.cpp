@@ -92,6 +92,7 @@ bool Bindicator::isAfterResetTime() {
 }
 
 void Bindicator::reset() {
+    Serial.println("reset: Resetting bindicator state");
     binTakenOutTime = 0;
     currentBinType = BinType::NONE;
     ConfigManager::setBinTakenOutTime(0);
@@ -117,14 +118,28 @@ void Bindicator::initializeFromStorage() {
     Serial.printf("initializeFromStorage: binTakenOut=%d, currentBinType=%d\n",
                  binTakenOutTime, static_cast<int>(currentBinType));
 
-    Command cmd;
-    if (currentBinType == BinType::NONE) {
-        Serial.println("initializeFromStorage: No bin type set, showing neither screen");
-        cmd = CMD_SHOW_NEITHER;
-    } else {
-        cmd = binTakenOutTime > 0 ? CMD_SHOW_COMPLETED :
-            (currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH);
+    if (binTakenOutTime > 0 && !isAfterResetTime()) {
+        Serial.println("initializeFromStorage: Bin taken out and not after reset, showing completed");
+        Command cmd = CMD_SHOW_COMPLETED;
+        Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
+        sendCommand(cmd);
+        return;
     }
-    Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
+
+    if (binTakenOutTime > 0 || isAfterResetTime()) {
+        Serial.println("initializeFromStorage: Will check calendar soon, keeping loading screen");
+        return;
+    }
+
+    if (currentBinType == BinType::NONE) {
+        Serial.println("initializeFromStorage: No bin type set and won't check calendar, showing neither screen");
+        Command cmd = CMD_SHOW_NEITHER;
+        Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
+        sendCommand(cmd);
+        return;
+    }
+
+    Command cmd = currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH;
+    Serial.printf("initializeFromStorage: Showing current bin type, sending command %d\n", cmd);
     sendCommand(cmd);
 }
