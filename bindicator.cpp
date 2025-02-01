@@ -37,32 +37,24 @@ void Bindicator::setBinType(BinType type) {
     Serial.printf("setBinType: type=%d, currentType=%d, binTakenOut=%d\n",
                  static_cast<int>(type), static_cast<int>(currentBinType), binTakenOut);
 
-    // Only send command if we're changing to or from a non-NONE type
-    if (type != BinType::NONE || currentBinType != BinType::NONE) {
-        Command cmd;
-        switch(type) {
-            case BinType::RECYCLING:
-                cmd = CMD_SHOW_RECYCLING;
-                break;
-            case BinType::RUBBISH:
-                cmd = CMD_SHOW_RUBBISH;
-                break;
-            default:
-                cmd = CMD_SHOW_NEITHER;
-                break;
-        }
-
-        Serial.printf("setBinType: Sending command %d\n", cmd);
-        sendCommand(cmd);
+    Command cmd;
+    switch(type) {
+        case BinType::RECYCLING:
+            cmd = CMD_SHOW_RECYCLING;
+            break;
+        case BinType::RUBBISH:
+            cmd = CMD_SHOW_RUBBISH;
+            break;
+        default:
+            cmd = CMD_SHOW_NEITHER;
+            break;
     }
+
+    Serial.printf("setBinType: Sending command %d\n", cmd);
+    sendCommand(cmd);
 
     currentBinType = type;
     ConfigManager::setBinType(type);
-
-    if (binTakenOut) {
-        binTakenOut = false;
-        ConfigManager::setBinTakenOut(false);
-    }
 }
 
 bool Bindicator::isAfterResetTime() {
