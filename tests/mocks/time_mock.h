@@ -3,8 +3,14 @@
 
 #include <time.h>
 
-// Allow setting a mock time for testing
 extern time_t mock_current_time;
+
+inline time_t time(time_t* t) {
+    if (t != nullptr) {
+        *t = mock_current_time;
+    }
+    return mock_current_time;
+}
 
 inline void setMockTime(int year, int month, int day, int hour = 0, int min = 0, int sec = 0) {
     struct tm timeinfo = {};

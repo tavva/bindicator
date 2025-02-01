@@ -77,14 +77,14 @@ bool ConfigManager::setCalendarId(const String& id) {
     return preferences.putString(KEY_CALENDAR_ID, id);
 }
 
-bool ConfigManager::getBinTakenOut() {
+time_t ConfigManager::getBinTakenOutTime() {
     begin();
-    return preferences.getBool(KEY_BIN_TAKEN_OUT, false);
+    return preferences.getInt(KEY_BIN_TAKEN_OUT, 0);
 }
 
-bool ConfigManager::setBinTakenOut(bool taken) {
+bool ConfigManager::setBinTakenOutTime(time_t time) {
     begin();
-    return preferences.putBool(KEY_BIN_TAKEN_OUT, taken);
+    return preferences.putInt(KEY_BIN_TAKEN_OUT, time);
 }
 
 BinType ConfigManager::getBinType() {

@@ -25,8 +25,8 @@ class ConfigManager {
         static String getCalendarId();
         static bool setCalendarId(const String& id);
 
-        static bool getBinTakenOut();
-        static bool setBinTakenOut(bool taken);
+        static time_t getBinTakenOutTime();
+        static bool setBinTakenOutTime(time_t time);
 
         static BinType getBinType();
         static bool setBinType(BinType type);

@@ -4,23 +4,23 @@
 #include "config_manager.h"
 
 BinType Bindicator::currentBinType = BinType::NONE;
-bool Bindicator::binTakenOut = false;
+time_t Bindicator::binTakenOutTime = 0;
 
 void Bindicator::handleButtonPress() {
-    if (!binTakenOut && currentBinType != BinType::NONE) {
-        binTakenOut = true;
-        ConfigManager::setBinTakenOut(true);
+    if (binTakenOutTime == 0 && currentBinType != BinType::NONE) {
+        binTakenOutTime = time(nullptr);
+        ConfigManager::setBinTakenOutTime(binTakenOutTime);
         Command cmd = CMD_SHOW_COMPLETED;
         xQueueSend(commandQueue, &cmd, 0);
     }
 }
 
 bool Bindicator::shouldCheckCalendar() {
-    if (binTakenOut && !isAfterResetTime()) {
+    if (binTakenOutTime > 0 && !isAfterResetTime()) {
         return false;
     }
 
-    if (binTakenOut && isAfterResetTime()) {
+    if (binTakenOutTime > 0 && isAfterResetTime()) {
         reset();
     }
 
@@ -34,24 +34,29 @@ void Bindicator::sendCommand(Command cmd) {
 }
 
 void Bindicator::setBinType(BinType type) {
-    Serial.printf("setBinType: type=%d, currentType=%d, binTakenOut=%d\n",
-                 static_cast<int>(type), static_cast<int>(currentBinType), binTakenOut);
+    Serial.printf("setBinType: type=%d, currentType=%d, binTakenOutTime=%ld\n",
+                 static_cast<int>(type), static_cast<int>(currentBinType), binTakenOutTime);
 
-    Command cmd;
-    switch(type) {
-        case BinType::RECYCLING:
-            cmd = CMD_SHOW_RECYCLING;
-            break;
-        case BinType::RUBBISH:
-            cmd = CMD_SHOW_RUBBISH;
-            break;
-        default:
-            cmd = CMD_SHOW_NEITHER;
-            break;
+    if (type != currentBinType) {
+        binTakenOutTime = 0;
+        ConfigManager::setBinTakenOutTime(0);
+
+        Command cmd;
+        switch(type) {
+            case BinType::RECYCLING:
+                cmd = CMD_SHOW_RECYCLING;
+                break;
+            case BinType::RUBBISH:
+                cmd = CMD_SHOW_RUBBISH;
+                break;
+            default:
+                cmd = CMD_SHOW_NEITHER;
+                break;
+        }
+
+        Serial.printf("setBinType: Sending command %d\n", cmd);
+        sendCommand(cmd);
     }
-
-    Serial.printf("setBinType: Sending command %d\n", cmd);
-    sendCommand(cmd);
 
     currentBinType = type;
     ConfigManager::setBinType(type);
@@ -63,13 +68,33 @@ bool Bindicator::isAfterResetTime() {
         return false;
     }
 
-    return timeinfo.tm_hour >= RESET_HOUR;
+    // If no bin taken out, just check if we're after reset hour
+    if (binTakenOutTime == 0) {
+        return timeinfo.tm_hour >= RESET_HOUR;
+    }
+
+    struct tm nextReset;
+    struct tm binTime;
+    localtime_r(&binTakenOutTime, &nextReset);
+    localtime_r(&binTakenOutTime, &binTime);
+    nextReset.tm_hour = RESET_HOUR;
+    nextReset.tm_min = 0;
+    nextReset.tm_sec = 0;
+
+    if (binTime.tm_hour >= RESET_HOUR) {
+        nextReset.tm_mday++;
+    }
+
+    time_t nextResetTime = mktime(&nextReset);
+    time_t now = time(nullptr);
+
+    return now >= nextResetTime;
 }
 
 void Bindicator::reset() {
-    binTakenOut = false;
+    binTakenOutTime = 0;
     currentBinType = BinType::NONE;
-    ConfigManager::setBinTakenOut(false);
+    ConfigManager::setBinTakenOutTime(0);
     ConfigManager::setBinType(BinType::NONE);
 
     if (currentBinType != BinType::NONE) {
@@ -83,21 +108,21 @@ BinType Bindicator::getCurrentBinType() {
 }
 
 bool Bindicator::isBinTakenOut() {
-    return binTakenOut;
+    return binTakenOutTime > 0;
 }
 
 void Bindicator::initializeFromStorage() {
-    binTakenOut = ConfigManager::getBinTakenOut();
+    binTakenOutTime = ConfigManager::getBinTakenOutTime();
     currentBinType = ConfigManager::getBinType();
     Serial.printf("initializeFromStorage: binTakenOut=%d, currentBinType=%d\n",
-                 binTakenOut, static_cast<int>(currentBinType));
+                 binTakenOutTime, static_cast<int>(currentBinType));
 
     if (currentBinType == BinType::NONE) {
         Serial.println("initializeFromStorage: No bin type set, skipping command");
         return;
     }
 
-    Command cmd = binTakenOut ? CMD_SHOW_COMPLETED :
+    Command cmd = binTakenOutTime > 0 ? CMD_SHOW_COMPLETED :
         (currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH);
     Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
     sendCommand(cmd);

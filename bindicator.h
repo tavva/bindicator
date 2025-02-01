@@ -17,7 +17,7 @@ class Bindicator {
 
     private:
         static BinType currentBinType;
-        static bool binTakenOut;
+        static time_t binTakenOutTime;
         static const int RESET_HOUR = 3;
 
         static bool isAfterResetTime();
