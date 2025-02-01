@@ -37,12 +37,6 @@ void Bindicator::setBinType(BinType type) {
     Serial.printf("setBinType: type=%d, currentType=%d, binTakenOut=%d\n",
                  static_cast<int>(type), static_cast<int>(currentBinType), binTakenOut);
 
-    // If the bin type hasn't changed, keep existing state
-    if (type == currentBinType) {
-        Serial.println("setBinType: Same type, keeping existing state");
-        return;
-    }
-
     // Only send command if we're changing to or from a non-NONE type
     if (type != BinType::NONE || currentBinType != BinType::NONE) {
         Command cmd;
