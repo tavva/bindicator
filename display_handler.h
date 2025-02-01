@@ -19,7 +19,7 @@ class DisplayHandler {
         static const uint8_t MATRIX_HEIGHT = 8;
 
         static const uint8_t MAX_BRIGHTNESS = 20;
-        static const uint8_t MIN_BRIGHTNESS = 5;
+        static const uint8_t MIN_BRIGHTNESS = 0;
 
         // We need to keep the brightness low to prevent overheating,
         // see: https://www.waveshare.com/wiki/ESP32-S3-Matrix
