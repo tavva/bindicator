@@ -15,6 +15,19 @@ void DisplayHandler::begin() {
     matrix.show();
 }
 
+// Add this helper method to rotate pixel coordinates 180 degrees
+uint16_t DisplayHandler::getRotatedPixel(uint16_t pixel) {
+    // For 8x8 matrix, rotate 180 degrees means:
+    // (x,y) becomes (7-x, 7-y)
+    uint8_t x = pixel % MATRIX_WIDTH;
+    uint8_t y = pixel / MATRIX_WIDTH;
+    return ((MATRIX_HEIGHT - 1 - y) * MATRIX_WIDTH) + (MATRIX_WIDTH - 1 - x);
+}
+
+void DisplayHandler::setPixelColor(uint16_t pixel, uint32_t color) {
+    matrix.setPixelColor(getRotatedPixel(pixel), color);
+}
+
 void DisplayHandler::update() {
     if (!isPulsing) return;
 

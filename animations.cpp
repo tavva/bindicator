@@ -79,7 +79,7 @@ void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             if (exclamation[row][col] == 1) {  // stroke
-                display.matrix.setPixelColor(row * 8 + col,
+                display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (stroke.r * brightness) / 64,
                         (stroke.g * brightness) / 64,
@@ -87,7 +87,7 @@ void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
                     )
                 );
             } else if (exclamation[row][col] == 2) {  // dot
-                display.matrix.setPixelColor(row * 8 + col,
+                display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (dot.r * brightness) / 64,
                         (dot.g * brightness) / 64,
@@ -140,8 +140,10 @@ void Animations::drawPrepare(DisplayHandler& display) {
         pos2_col = 1;
     }
 
-    display.matrix.setPixelColor(pos1_row * 8 + pos1_col, display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
-    display.matrix.setPixelColor(pos2_row * 8 + pos2_col, display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
+    display.setPixelColor(pos1_row * 8 + pos1_col,
+        display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
+    display.setPixelColor(pos2_row * 8 + pos2_col,
+        display.matrix.Color(prepareColor.r, prepareColor.g, prepareColor.b));
 
     updateLoadingPosition();
 }
@@ -157,11 +159,11 @@ void Animations::drawSetupMode(DisplayHandler& display) {
 }
 
 void Animations::drawPulse(DisplayHandler& display, Color color) {
-    uint8_t brightness = calculateBrightness();
+    uint8_t brightness = calculateBrightness() / 2;
 
-    for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-            display.matrix.setPixelColor(row * 8 + col,
+    for (int row = 3; row < 5; row++) {
+        for (int col = 3; col < 5; col++) {
+            display.setPixelColor(row * 8 + col,
                 display.matrix.Color(
                     (color.r * brightness) / 64,
                     (color.g * brightness) / 64,
@@ -178,7 +180,7 @@ void Animations::drawBinImage(DisplayHandler& display, Color color) {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             if (binImage[row][col] == 1) {
-                display.matrix.setPixelColor(row * 8 + col,
+                display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (color.r * brightness) / 64,
                         (color.g * brightness) / 64,
@@ -196,7 +198,7 @@ void Animations::drawComplete(DisplayHandler& display, Color color) {
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             if (completeImage[row][col] == 1) {
-                display.matrix.setPixelColor(row * 8 + col,
+                display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (color.r * brightness) / 64,
                         (color.g * brightness) / 64,

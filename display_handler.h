@@ -10,6 +10,7 @@ class DisplayHandler {
         DisplayHandler(uint8_t pin = 14);
         void begin();
         void update();
+        void setPixelColor(uint16_t pixel, uint32_t color);
 
         Adafruit_NeoPixel matrix;
 
@@ -29,8 +30,10 @@ class DisplayHandler {
         uint32_t currentColor;
         bool isPulsing;
         unsigned long lastPulseUpdate;
-        float pulseValue;
+        uint8_t pulseValue;
         bool pulseIncreasing;
+
+        uint16_t getRotatedPixel(uint16_t pixel);
 };
 
 #endif
