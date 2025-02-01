@@ -36,6 +36,7 @@ const uint8_t Animations::completeImage[8][8] = {
 int Animations::brightnessTick = 0;
 int Animations::loadingPos = 0;
 int Animations::animationCounter = 0;
+unsigned long Animations::lastPulseTime = 0;
 
 const Color Animations::ERROR_RED(50, 0, 0);
 const Color Animations::ERROR_DOT_BLUE(0, 0, 50);
@@ -51,9 +52,18 @@ const Color Animations::LOADING_WHITE(50, 50, 50);
 Color Animations::prepareColor = LOADING_WHITE;
 
 uint8_t Animations::calculateBrightness() {
-    uint8_t brightness = (brightnessTick < 32) ? brightnessTick * 2 : (64 - brightnessTick) * 2;
-    brightnessTick = (brightnessTick + 1) % 64;
-    return brightness;
+    unsigned long currentTime = millis();
+    if (lastPulseTime == 0) {
+        lastPulseTime = currentTime;
+    }
+
+    // Use a 3-second cycle for the pulse (3000ms)
+    float phase = ((currentTime - lastPulseTime) % 3000) / 3000.0;
+    // Use sine wave for smooth transitions, map to 0-255 range
+    float sinValue = (sin(2.0 * PI * phase) + 1.0) / 2.0;
+    // Apply easing for more natural brightness perception
+    float easedValue = sinValue * sinValue;  // Square for perceived brightness
+    return (uint8_t)(easedValue * 255);
 }
 
 void Animations::drawError(DisplayHandler& display, ErrorType type) {
@@ -159,15 +169,15 @@ void Animations::drawSetupMode(DisplayHandler& display) {
 }
 
 void Animations::drawPulse(DisplayHandler& display, Color color) {
-    uint8_t brightness = calculateBrightness() / 2;
+    uint8_t brightness = calculateBrightness();
 
     for (int row = 3; row < 5; row++) {
         for (int col = 3; col < 5; col++) {
             display.setPixelColor(row * 8 + col,
                 display.matrix.Color(
-                    (color.r * brightness) / 64,
-                    (color.g * brightness) / 64,
-                    (color.b * brightness) / 64
+                    (color.r * brightness) / 255,
+                    (color.g * brightness) / 255,
+                    (color.b * brightness) / 255
                 )
             );
         }

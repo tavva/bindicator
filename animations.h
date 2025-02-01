@@ -49,6 +49,7 @@ class Animations {
         static int animationCounter;
         static const int ANIMATION_SPEED = 4;
         static Color prepareColor;
+        static unsigned long lastPulseTime;
 
         static uint8_t calculateBrightness();
         static void updateLoadingPosition();

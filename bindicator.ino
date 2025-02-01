@@ -171,10 +171,11 @@ void setup() {
 
 void loop() {
     SerialCommands::handle();
+    button.handle();
 
     if (inSetupMode) {
         setupServer.handleClient();
-        yield();
+        delay(50);
     }
 
     vTaskDelay(pdMS_TO_TICKS(10));
