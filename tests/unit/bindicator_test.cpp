@@ -12,6 +12,8 @@ protected:
         Serial.suppressOutput(true);
         commandQueue = xQueueCreate(10, sizeof(Command));
         Bindicator::reset();
+        Command cmd;
+        while (xQueueReceive(commandQueue, &cmd, 0)) {}
         // Set mock time to 2am (before RESET_HOUR of 3am)
         setMockTime(2024, 3, 21, 2, 0, 0);
     }
@@ -19,6 +21,11 @@ protected:
     void TearDown() override {
         Serial.suppressOutput(false);
         vQueueDelete(commandQueue);
+    }
+
+    void clearQueue() {
+        Command cmd;
+        while (xQueueReceive(commandQueue, &cmd, 0)) {}
     }
 };
 
@@ -29,13 +36,13 @@ TEST_F(BindicatorTest, HandleButtonPress) {
 
     // Should mark as complete when bin is due
     Bindicator::setBinType(BinType::RECYCLING);
-    Command cmd;
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command from the queue
+    clearQueue();
 
     Bindicator::handleButtonPress();
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
     // Verify command was sent
+    Command cmd;
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_COMPLETED);
 }
@@ -44,10 +51,10 @@ TEST_F(BindicatorTest, ShouldCheckCalendar) {
     EXPECT_TRUE(Bindicator::shouldCheckCalendar());
 
     Bindicator::setBinType(BinType::RECYCLING);
-    Command cmd;
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command from the queue
+    clearQueue();
 
     Bindicator::handleButtonPress();
+    clearQueue();
 
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     EXPECT_FALSE(Bindicator::shouldCheckCalendar());
@@ -71,7 +78,7 @@ TEST_F(BindicatorTest, BinTakenOutPersistsThroughRestart) {
     // Set initial state
     Bindicator::setBinType(BinType::RECYCLING);
     Command cmd;
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
 
     // Mark bin as taken out
@@ -81,28 +88,30 @@ TEST_F(BindicatorTest, BinTakenOutPersistsThroughRestart) {
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
     // Simulate restart by reinitializing
+    clearQueue();
     Bindicator::initializeFromStorage();
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_COMPLETED);
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
     // Calendar check confirms same bin - should stay completed
+    clearQueue();
     Bindicator::setBinType(BinType::RECYCLING);
-    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));  // No new command
+    EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 }
 
 TEST_F(BindicatorTest, BinTakenOutResetsWithNewBinType) {
     // Set initial state and mark as taken out
     Bindicator::setBinType(BinType::RECYCLING);
-    Command cmd;
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    clearQueue();
     Bindicator::handleButtonPress();
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the COMPLETED command
+    clearQueue();
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
     // New bin type should reset taken out status
     Bindicator::setBinType(BinType::RUBBISH);
+    Command cmd;
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RUBBISH);
     EXPECT_FALSE(Bindicator::isBinTakenOut());
@@ -111,6 +120,7 @@ TEST_F(BindicatorTest, BinTakenOutResetsWithNewBinType) {
 TEST_F(BindicatorTest, InitializeFromStorageWithNoBinType) {
     // Start with no bin type
     Bindicator::reset();
+    clearQueue();
     Command cmd;
 
     // Initialize should send CMD_SHOW_NEITHER
@@ -124,9 +134,9 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
 
     // Scenario 1: Bin taken out and not after reset time
     Bindicator::setBinType(BinType::RECYCLING);
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    clearQueue();
     Bindicator::handleButtonPress();
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the COMPLETED command
+    clearQueue();
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     Bindicator::initializeFromStorage();
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
@@ -139,14 +149,16 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
 
     // Scenario 3: After reset time (no bin taken out)
     Bindicator::reset();
+    clearQueue();
     Bindicator::setBinType(BinType::RECYCLING);
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    clearQueue();
     setMockTime(2024, 3, 21, 15, 30, 0);  // After RESET_HOUR
     Bindicator::initializeFromStorage();
     EXPECT_FALSE(xQueueReceive(commandQueue, &cmd, 0));  // Should keep loading screen
 
     // Scenario 4: No bin taken out, not after reset time, no bin type
     Bindicator::reset();
+    clearQueue();
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     Bindicator::initializeFromStorage();
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
@@ -154,8 +166,9 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
 
     // Scenario 5: No bin taken out, not after reset time, has bin type
     Bindicator::reset();
+    clearQueue();
     Bindicator::setBinType(BinType::RECYCLING);
-    xQueueReceive(commandQueue, &cmd, 0);  // Clear the RECYCLING command
+    clearQueue();
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     Bindicator::initializeFromStorage();
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));

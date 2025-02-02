@@ -135,11 +135,6 @@ void calendarTask(void* parameter) {
 
         Serial.println("\nCalendar check cycle starting");
 
-        if (Bindicator::isBinTakenOut() && Bindicator::isAfterResetTime()) {
-            Serial.println("Reset time reached, resetting state");
-            Bindicator::reset();
-        }
-
         if (!Bindicator::shouldCheckCalendar()) {
             Serial.println("Skipping calendar check - bin already taken out or wrong time");
             vTaskDelay(xDelay);
