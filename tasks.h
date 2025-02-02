@@ -6,16 +6,16 @@
 #include <freertos/queue.h>
 
 enum Command {
-    CMD_NONE = 0,
-    CMD_SHOW_RECYCLING,
-    CMD_SHOW_RUBBISH,
-    CMD_SHOW_COMPLETED,
-    CMD_SHOW_NEITHER,
-    CMD_SHOW_LOADING,
-    CMD_SHOW_SETUP_MODE,
-    CMD_SHOW_ERROR_API,
-    CMD_SHOW_ERROR_WIFI,
-    CMD_SHOW_ERROR_OTHER
+    CMD_NONE = -1,        // Special value for no command
+    CMD_SHOW_NEITHER = 0,
+    CMD_SHOW_RECYCLING = 1,
+    CMD_SHOW_RUBBISH = 2,
+    CMD_SHOW_COMPLETED = 3,
+    CMD_SHOW_LOADING = 4,
+    CMD_SHOW_ERROR_API = 5,
+    CMD_SHOW_ERROR_WIFI = 6,
+    CMD_SHOW_SETUP_MODE = 7,
+    CMD_SHOW_ERROR_OTHER = 8
 };
 
 extern bool isBin;

@@ -147,22 +147,14 @@ void calendarTask(void* parameter) {
             bool hasRubbish = false;
 
             if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-                if (hasRecycling) {
-                    Bindicator::setBinType(BinType::RECYCLING);
-                } else if (hasRubbish) {
-                    Bindicator::setBinType(BinType::RUBBISH);
-                } else {
-                    Bindicator::setBinType(BinType::NONE);
-                }
+                Bindicator::updateFromCalendar(hasRecycling, hasRubbish);
             } else {
                 Serial.println("Failed to check calendar");
-                Command cmd = CMD_SHOW_ERROR_API;
-                xQueueSend(commandQueue, &cmd, 0);
+                Bindicator::setErrorState(false);  // API error
             }
         } else {
             Serial.println("WiFi not connected, skipping calendar check");
-            Command cmd = CMD_SHOW_ERROR_WIFI;
-            xQueueSend(commandQueue, &cmd, 0);
+            Bindicator::setErrorState(true);  // WiFi error
         }
 
         vTaskDelay(xDelay);

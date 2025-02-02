@@ -1,10 +1,11 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -I./mocks -I./mocks/freertos -I.. $(shell pkg-config --cflags gtest)
+CXXFLAGS = -std=c++14 -Wall -I./mocks -I./mocks/freertos -I.. -DTESTING $(shell pkg-config --cflags gtest)
 GTEST_FLAGS = $(shell pkg-config --libs gtest gtest_main) -pthread
 
 TEST_SRCS = unit/utils_test.cpp \
             unit/bindicator_test.cpp \
             unit/time_manager_test.cpp \
+            unit/config_manager_test.cpp \
             mocks/freertos_mock.cpp \
             mocks/Arduino.cpp \
             mocks/time_mock.cpp \

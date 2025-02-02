@@ -3,27 +3,100 @@
 #include "tasks.h"
 #include "config_manager.h"
 
-BinType Bindicator::currentBinType = BinType::NONE;
-time_t Bindicator::binTakenOutTime = 0;
+BindicatorState Bindicator::state = BindicatorState::LOADING;
+time_t Bindicator::completedTime = 0;
 
 void Bindicator::handleButtonPress() {
-    if (binTakenOutTime == 0 && currentBinType != BinType::NONE) {
-        binTakenOutTime = time(nullptr);
-        ConfigManager::setBinTakenOutTime(binTakenOutTime);
-        Command cmd = CMD_SHOW_COMPLETED;
-        xQueueSend(commandQueue, &cmd, 0);
+    if (state == BindicatorState::RECYCLING_DUE || state == BindicatorState::RUBBISH_DUE) {
+        transitionTo(BindicatorState::COMPLETED);
     }
 }
 
 bool Bindicator::shouldCheckCalendar() {
-    if (binTakenOutTime > 0) {
+    if (isInErrorState() || isInSetupMode()) {
+        return false;
+    }
+
+    if (state == BindicatorState::COMPLETED) {
         if (isAfterResetTime()) {
-            reset();
+            transitionTo(BindicatorState::LOADING);
             return true;
         }
         return false;
     }
+
     return true;
+}
+
+void Bindicator::updateFromCalendar(bool hasRecycling, bool hasRubbish) {
+    if (hasRecycling) {
+        transitionTo(BindicatorState::RECYCLING_DUE);
+    } else if (hasRubbish) {
+        transitionTo(BindicatorState::RUBBISH_DUE);
+    } else {
+        transitionTo(BindicatorState::NO_COLLECTION);
+    }
+}
+
+void Bindicator::setErrorState(bool isWifiError) {
+    transitionTo(isWifiError ? BindicatorState::ERROR_WIFI : BindicatorState::ERROR_API);
+}
+
+bool Bindicator::isInErrorState() {
+    return state == BindicatorState::ERROR_WIFI || state == BindicatorState::ERROR_API;
+}
+
+bool Bindicator::isBinTakenOut() {
+    return state == BindicatorState::COMPLETED;
+}
+
+void Bindicator::transitionTo(BindicatorState newState) {
+    Serial.printf("State transition: %d -> %d\n", static_cast<int>(state), static_cast<int>(newState));
+
+    if (newState == state) return;
+
+    if (state == BindicatorState::COMPLETED) {
+        completedTime = 0;
+    }
+
+    if (newState == BindicatorState::COMPLETED) {
+        completedTime = time(nullptr);
+    }
+
+    state = newState;
+    persistState();
+    sendStateCommand(state);
+}
+
+void Bindicator::sendStateCommand(BindicatorState state) {
+    Command cmd;
+    switch (state) {
+        case BindicatorState::NO_COLLECTION:
+            cmd = CMD_SHOW_NEITHER;
+            break;
+        case BindicatorState::RECYCLING_DUE:
+            cmd = CMD_SHOW_RECYCLING;
+            break;
+        case BindicatorState::RUBBISH_DUE:
+            cmd = CMD_SHOW_RUBBISH;
+            break;
+        case BindicatorState::COMPLETED:
+            cmd = CMD_SHOW_COMPLETED;
+            break;
+        case BindicatorState::LOADING:
+            cmd = CMD_SHOW_LOADING;
+            break;
+        case BindicatorState::SETUP:
+            cmd = CMD_SHOW_SETUP_MODE;
+            break;
+        case BindicatorState::ERROR_API:
+            cmd = CMD_SHOW_ERROR_API;
+            break;
+        case BindicatorState::ERROR_WIFI:
+            cmd = CMD_SHOW_ERROR_WIFI;
+            break;
+    }
+    sendCommand(cmd);
 }
 
 void Bindicator::sendCommand(Command cmd) {
@@ -32,55 +105,29 @@ void Bindicator::sendCommand(Command cmd) {
     }
 }
 
-void Bindicator::setBinType(BinType type) {
-    Serial.printf("setBinType: type=%d, currentType=%d, binTakenOutTime=%ld\n",
-                 static_cast<int>(type), static_cast<int>(currentBinType), binTakenOutTime);
-
-    if (type != currentBinType) {
-        binTakenOutTime = 0;
-        ConfigManager::setBinTakenOutTime(0);
-
-        Command cmd;
-        switch(type) {
-            case BinType::RECYCLING:
-                cmd = CMD_SHOW_RECYCLING;
-                break;
-            case BinType::RUBBISH:
-                cmd = CMD_SHOW_RUBBISH;
-                break;
-            default:
-                cmd = CMD_SHOW_NEITHER;
-                break;
-        }
-
-        Serial.printf("setBinType: Sending command %d\n", cmd);
-        sendCommand(cmd);
-    }
-
-    currentBinType = type;
-    ConfigManager::setBinType(type);
+void Bindicator::persistState() {
+    ConfigManager::setState(static_cast<int>(state));
+    ConfigManager::setCompletedTime(completedTime);
 }
 
 bool Bindicator::isAfterResetTime() {
+    if (state != BindicatorState::COMPLETED) return false;
+
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to get local time");
         return false;
     }
 
-    // If no bin taken out, just check if we're after reset hour
-    if (binTakenOutTime == 0) {
-        return timeinfo.tm_hour >= RESET_HOUR;
-    }
-
     struct tm nextReset;
-    struct tm binTime;
-    localtime_r(&binTakenOutTime, &nextReset);
-    localtime_r(&binTakenOutTime, &binTime);
+    struct tm completedTimeInfo;
+    localtime_r(&completedTime, &nextReset);
+    localtime_r(&completedTime, &completedTimeInfo);
     nextReset.tm_hour = RESET_HOUR;
     nextReset.tm_min = 0;
     nextReset.tm_sec = 0;
 
-    if (binTime.tm_hour >= RESET_HOUR) {
+    if (completedTimeInfo.tm_hour >= RESET_HOUR) {
         nextReset.tm_mday++;
     }
 
@@ -90,51 +137,25 @@ bool Bindicator::isAfterResetTime() {
     return now >= nextResetTime;
 }
 
-void Bindicator::reset() {
-    Serial.println("reset: Resetting bindicator state");
-    Command cmd = CMD_SHOW_NEITHER;
-    sendCommand(cmd);
-
-    binTakenOutTime = 0;
-    currentBinType = BinType::NONE;
-    ConfigManager::setBinTakenOutTime(0);
-    ConfigManager::setBinType(BinType::NONE);
-}
-
-BinType Bindicator::getCurrentBinType() {
-    return currentBinType;
-}
-
-bool Bindicator::isBinTakenOut() {
-    return binTakenOutTime > 0;
-}
-
 void Bindicator::initializeFromStorage() {
-    binTakenOutTime = ConfigManager::getBinTakenOutTime();
-    currentBinType = ConfigManager::getBinType();
-    Serial.printf("initializeFromStorage: binTakenOut=%d, currentBinType=%d\n",
-                 binTakenOutTime, static_cast<int>(currentBinType));
+    state = static_cast<BindicatorState>(ConfigManager::getState());
+    completedTime = ConfigManager::getCompletedTime();
 
-    if (binTakenOutTime > 0 && !isAfterResetTime()) {
-        Serial.println("initializeFromStorage: Bin taken out and not after reset, showing completed");
-        Command cmd = CMD_SHOW_COMPLETED;
-        sendCommand(cmd);
-        return;
+    if (state == BindicatorState::COMPLETED && isAfterResetTime()) {
+        transitionTo(BindicatorState::LOADING);
+    } else {
+        sendStateCommand(state);
     }
+}
 
-    if (binTakenOutTime > 0 || isAfterResetTime()) {
-        Serial.println("initializeFromStorage: Will check calendar soon, keeping loading screen");
-        return;
-    }
+void Bindicator::enterSetupMode() {
+    transitionTo(BindicatorState::SETUP);
+}
 
-    if (currentBinType == BinType::NONE) {
-        Serial.println("initializeFromStorage: No bin type set and won't check calendar, showing neither screen");
-        Command cmd = CMD_SHOW_NEITHER;
-        sendCommand(cmd);
-        return;
-    }
+void Bindicator::exitSetupMode() {
+    transitionTo(BindicatorState::LOADING);
+}
 
-    Command cmd = currentBinType == BinType::RECYCLING ? CMD_SHOW_RECYCLING : CMD_SHOW_RUBBISH;
-    Serial.printf("initializeFromStorage: Showing current bin type, sending command %d\n", cmd);
-    sendCommand(cmd);
+bool Bindicator::isInSetupMode() {
+    return state == BindicatorState::SETUP;
 }

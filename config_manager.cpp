@@ -1,25 +1,25 @@
 #include "config_manager.h"
 
 Preferences ConfigManager::preferences;
-bool ConfigManager::prefsInitialized = false;
 const char* ConfigManager::PREF_NAMESPACE = "system";
 const char* ConfigManager::KEY_WIFI_SSID = "wifi_ssid";
 const char* ConfigManager::KEY_WIFI_PASS = "wifi_pass";
-const char* ConfigManager::KEY_FORCED_SETUP = "force_setup";
+const char* ConfigManager::KEY_FORCE_SETUP = "force_setup";
 const char* ConfigManager::KEY_CALENDAR_ID = "calendar_id";
 const char* ConfigManager::KEY_BIN_TAKEN_OUT = "bin_taken";
 const char* ConfigManager::KEY_BIN_TYPE = "bin_type";
+const char* ConfigManager::KEY_STATE = "state";
+const char* ConfigManager::KEY_COMPLETED_TIME = "completed_time";
 
 void ConfigManager::begin() {
-    if (!prefsInitialized) {
-        preferences.begin(PREF_NAMESPACE, false);
-        prefsInitialized = true;
-    }
+    preferences.begin(PREF_NAMESPACE, false);
 }
 
 bool ConfigManager::isConfigured() {
     begin();
-    return !getWifiSSID().isEmpty();
+    String ssid = preferences.getString(KEY_WIFI_SSID, "");
+    String password = preferences.getString(KEY_WIFI_PASS, "");
+    return !ssid.isEmpty() && !password.isEmpty();
 }
 
 String ConfigManager::getWifiSSID() {
@@ -47,23 +47,20 @@ bool ConfigManager::setWifiCredentials(const String& ssid, const String& passwor
 
 bool ConfigManager::isInForcedSetupMode() {
     begin();
-    return !preferences.getString(KEY_FORCED_SETUP, "").isEmpty();
+    return preferences.getString(KEY_FORCE_SETUP, "") == "restart-in-setup-mode";
 }
 
 void ConfigManager::setForcedSetupFlag(const String& flag) {
     begin();
-    preferences.putString(KEY_FORCED_SETUP, flag);
+    preferences.putString(KEY_FORCE_SETUP, flag);
 }
 
 void ConfigManager::processSetupFlag() {
     begin();
-    String flag = preferences.getString(KEY_FORCED_SETUP, "");
-    if (flag.isEmpty()) {
-        return;
-    } else if (flag == "restart-in-setup-mode") {
-        setForcedSetupFlag("in-setup-mode");
-    } else if (flag == "in-setup-mode") {
-        preferences.remove(KEY_FORCED_SETUP);
+    String flag = preferences.getString(KEY_FORCE_SETUP, "");
+    if (!flag.isEmpty()) {
+        preferences.putString(KEY_FORCE_SETUP, "");
+        preferences.remove(KEY_FORCE_SETUP);
     }
 }
 
@@ -96,3 +93,37 @@ bool ConfigManager::setBinType(BinType type) {
     begin();
     return preferences.putInt(KEY_BIN_TYPE, static_cast<int>(type));
 }
+
+int ConfigManager::getState() {
+    begin();
+    return preferences.getInt(KEY_STATE, 0);  // 0 = NO_COLLECTION
+}
+
+bool ConfigManager::setState(int state) {
+    begin();
+    return preferences.putInt(KEY_STATE, state);
+}
+
+time_t ConfigManager::getCompletedTime() {
+    begin();
+    return preferences.getInt(KEY_COMPLETED_TIME, 0);
+}
+
+bool ConfigManager::setCompletedTime(time_t time) {
+    begin();
+    return preferences.putInt(KEY_COMPLETED_TIME, time);
+}
+
+#ifdef TESTING
+void ConfigManager::clearForTesting() {
+    begin();
+    preferences.remove(KEY_WIFI_SSID);
+    preferences.remove(KEY_WIFI_PASS);
+    preferences.remove(KEY_FORCE_SETUP);
+    preferences.remove(KEY_CALENDAR_ID);
+    preferences.remove(KEY_BIN_TAKEN_OUT);
+    preferences.remove(KEY_BIN_TYPE);
+    preferences.remove(KEY_STATE);
+    preferences.remove(KEY_COMPLETED_TIME);
+}
+#endif

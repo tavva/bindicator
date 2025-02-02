@@ -134,8 +134,6 @@ void setup() {
     delay(2000);
 
     ConfigManager::begin();
-    ConfigManager::processSetupFlag();
-
     display.begin();
     oauth.begin(nullptr);
     commandQueue = xQueueCreate(10, sizeof(Command));
@@ -153,6 +151,7 @@ void setup() {
     if (ConfigManager::isInForcedSetupMode()) {
         Serial.println("Force setup mode enabled");
         startSetupMode();
+        ConfigManager::processSetupFlag();
         return;
     }
 
