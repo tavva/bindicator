@@ -5,11 +5,17 @@
 #include "tasks.h"
 #include "bindicator_state.h"
 
+enum class CollectionState {
+    NO_COLLECTION,
+    RECYCLING_DUE,
+    RUBBISH_DUE
+};
+
 class Bindicator {
     public:
         static void handleButtonPress();
         static bool shouldCheckCalendar();
-        static void updateFromCalendar(bool hasRecycling, bool hasRubbish);
+        static void updateFromCalendar(CollectionState collectionState);
         static void initializeFromStorage();
         static void setErrorState(bool isWifiError);
         static bool isInErrorState();

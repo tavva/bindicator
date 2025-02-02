@@ -147,7 +147,13 @@ void calendarTask(void* parameter) {
             bool hasRubbish = false;
 
             if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
-                Bindicator::updateFromCalendar(hasRecycling, hasRubbish);
+                CollectionState state = CollectionState::NO_COLLECTION;
+                if (hasRecycling) {
+                    state = CollectionState::RECYCLING_DUE;
+                } else if (hasRubbish) {
+                    state = CollectionState::RUBBISH_DUE;
+                }
+                Bindicator::updateFromCalendar(state);
             } else {
                 Serial.println("Failed to check calendar");
                 Bindicator::setErrorState(false);  // API error

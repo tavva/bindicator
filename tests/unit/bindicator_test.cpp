@@ -38,7 +38,7 @@ TEST_F(BindicatorTest, HandleButtonPress) {
     Bindicator::handleButtonPress();
     EXPECT_FALSE(Bindicator::isBinTakenOut());
 
-    Bindicator::updateFromCalendar(true, false);  // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
 
     Bindicator::handleButtonPress();
@@ -52,7 +52,7 @@ TEST_F(BindicatorTest, HandleButtonPress) {
 TEST_F(BindicatorTest, ShouldCheckCalendar) {
     EXPECT_TRUE(Bindicator::shouldCheckCalendar());
 
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     Bindicator::handleButtonPress();
     clearQueue();
@@ -70,12 +70,12 @@ TEST_F(BindicatorTest, CalendarUpdates) {
     EXPECT_EQ(cmd, CMD_SHOW_LOADING);
     clearQueue();
 
-    Bindicator::updateFromCalendar(false, false);
+    Bindicator::updateFromCalendar(CollectionState::NO_COLLECTION);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
     clearQueue();
 
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
 }
@@ -86,7 +86,7 @@ TEST_F(BindicatorTest, BinTakenOutPersistsThroughRestart) {
     EXPECT_EQ(cmd, CMD_SHOW_LOADING);
     clearQueue();
 
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
 
@@ -103,20 +103,20 @@ TEST_F(BindicatorTest, BinTakenOutPersistsThroughRestart) {
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
     clearQueue();
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
     EXPECT_FALSE(Bindicator::isBinTakenOut());
 }
 
 TEST_F(BindicatorTest, BinTakenOutResetsWithNewBinType) {
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     Bindicator::handleButtonPress();
     clearQueue();
     EXPECT_TRUE(Bindicator::isBinTakenOut());
 
-    Bindicator::updateFromCalendar(false, true);  // Switch to rubbish
+    Bindicator::updateFromCalendar(CollectionState::RUBBISH_DUE);
     Command cmd;
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RUBBISH);
@@ -124,7 +124,7 @@ TEST_F(BindicatorTest, BinTakenOutResetsWithNewBinType) {
 }
 
 TEST_F(BindicatorTest, InitializeFromStorageWithNoCollection) {
-    Bindicator::updateFromCalendar(false, false);
+    Bindicator::updateFromCalendar(CollectionState::NO_COLLECTION);
     clearQueue();
     Command cmd;
 
@@ -137,7 +137,7 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
     Command cmd;
 
     // Scenario 1: Bin taken out and not after reset time
-    Bindicator::updateFromCalendar(true, false);
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     Bindicator::handleButtonPress();
     clearQueue();
@@ -153,7 +153,7 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
     EXPECT_EQ(cmd, CMD_SHOW_LOADING);
 
     // Scenario 3: After reset time (no bin taken out)
-    Bindicator::updateFromCalendar(true, false);
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     setMockTime(2024, 3, 21, 15, 30, 0);  // After RESET_HOUR
     Bindicator::initializeFromStorage();
@@ -161,7 +161,7 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
 
     // Scenario 4: No bin taken out, not after reset time, no collection
-    Bindicator::updateFromCalendar(false, false);
+    Bindicator::updateFromCalendar(CollectionState::NO_COLLECTION);
     clearQueue();
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     Bindicator::initializeFromStorage();
@@ -169,7 +169,7 @@ TEST_F(BindicatorTest, InitializeFromStorageScenarios) {
     EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
 
     // Scenario 5: No bin taken out, not after reset time, recycling due
-    Bindicator::updateFromCalendar(true, false);
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     setMockTime(2024, 3, 21, 2, 0, 0);  // Before RESET_HOUR
     Bindicator::initializeFromStorage();
@@ -222,19 +222,19 @@ TEST_F(BindicatorTest, StateTransitions) {
     EXPECT_EQ(cmd, CMD_SHOW_LOADING);
     clearQueue();
 
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RECYCLING);
 
-    Bindicator::updateFromCalendar(false, true); // Set rubbish due
+    Bindicator::updateFromCalendar(CollectionState::RUBBISH_DUE);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_RUBBISH);
 
-    Bindicator::updateFromCalendar(false, false);
+    Bindicator::updateFromCalendar(CollectionState::NO_COLLECTION);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_NEITHER);
 
-    Bindicator::updateFromCalendar(true, false); // Set recycling due
+    Bindicator::updateFromCalendar(CollectionState::RECYCLING_DUE);
     clearQueue();
     Bindicator::handleButtonPress();
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));

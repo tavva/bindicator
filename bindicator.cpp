@@ -28,13 +28,17 @@ bool Bindicator::shouldCheckCalendar() {
     return true;
 }
 
-void Bindicator::updateFromCalendar(bool hasRecycling, bool hasRubbish) {
-    if (hasRecycling) {
-        transitionTo(BindicatorState::RECYCLING_DUE);
-    } else if (hasRubbish) {
-        transitionTo(BindicatorState::RUBBISH_DUE);
-    } else {
-        transitionTo(BindicatorState::NO_COLLECTION);
+void Bindicator::updateFromCalendar(CollectionState collectionState) {
+    switch (collectionState) {
+        case CollectionState::RECYCLING_DUE:
+            transitionTo(BindicatorState::RECYCLING_DUE);
+            break;
+        case CollectionState::RUBBISH_DUE:
+            transitionTo(BindicatorState::RUBBISH_DUE);
+            break;
+        case CollectionState::NO_COLLECTION:
+            transitionTo(BindicatorState::NO_COLLECTION);
+            break;
     }
 }
 
