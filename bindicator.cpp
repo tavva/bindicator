@@ -118,7 +118,6 @@ void Bindicator::initializeFromStorage() {
     if (binTakenOutTime > 0 && !isAfterResetTime()) {
         Serial.println("initializeFromStorage: Bin taken out and not after reset, showing completed");
         Command cmd = CMD_SHOW_COMPLETED;
-        Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
         sendCommand(cmd);
         return;
     }
@@ -131,7 +130,6 @@ void Bindicator::initializeFromStorage() {
     if (currentBinType == BinType::NONE) {
         Serial.println("initializeFromStorage: No bin type set and won't check calendar, showing neither screen");
         Command cmd = CMD_SHOW_NEITHER;
-        Serial.printf("initializeFromStorage: Sending command %d\n", cmd);
         sendCommand(cmd);
         return;
     }
