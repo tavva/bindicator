@@ -203,13 +203,13 @@ TEST_F(BindicatorTest, ErrorStateHandling) {
     EXPECT_EQ(cmd, CMD_SHOW_LOADING);
     clearQueue();
 
-    Bindicator::setErrorState(true);
+    Bindicator::setErrorState(ErrorType::WIFI);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_ERROR_WIFI);
     EXPECT_TRUE(Bindicator::isInErrorState());
     EXPECT_FALSE(Bindicator::shouldCheckCalendar());
 
-    Bindicator::setErrorState(false);
+    Bindicator::setErrorState(ErrorType::API);
     EXPECT_TRUE(xQueueReceive(commandQueue, &cmd, 0));
     EXPECT_EQ(cmd, CMD_SHOW_ERROR_API);
     EXPECT_TRUE(Bindicator::isInErrorState());

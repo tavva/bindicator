@@ -156,11 +156,11 @@ void calendarTask(void* parameter) {
                 Bindicator::updateFromCalendar(state);
             } else {
                 Serial.println("Failed to check calendar");
-                Bindicator::setErrorState(false);  // API error
+                Bindicator::setErrorState(ErrorType::API);
             }
         } else {
             Serial.println("WiFi not connected, skipping calendar check");
-            Bindicator::setErrorState(true);  // WiFi error
+            Bindicator::setErrorState(ErrorType::WIFI);
         }
 
         vTaskDelay(xDelay);

@@ -11,13 +11,18 @@ enum class CollectionState {
     RUBBISH_DUE
 };
 
+enum class ErrorType {
+    WIFI,
+    API
+};
+
 class Bindicator {
     public:
         static void handleButtonPress();
         static bool shouldCheckCalendar();
         static void updateFromCalendar(CollectionState collectionState);
         static void initializeFromStorage();
-        static void setErrorState(bool isWifiError);
+        static void setErrorState(ErrorType errorType);
         static bool isInErrorState();
         static bool isBinTakenOut();
         static void enterSetupMode();

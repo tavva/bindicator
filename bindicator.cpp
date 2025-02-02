@@ -42,8 +42,8 @@ void Bindicator::updateFromCalendar(CollectionState collectionState) {
     }
 }
 
-void Bindicator::setErrorState(bool isWifiError) {
-    transitionTo(isWifiError ? BindicatorState::ERROR_WIFI : BindicatorState::ERROR_API);
+void Bindicator::setErrorState(ErrorType errorType) {
+    transitionTo(errorType == ErrorType::WIFI ? BindicatorState::ERROR_WIFI : BindicatorState::ERROR_API);
 }
 
 bool Bindicator::isInErrorState() {
