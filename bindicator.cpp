@@ -16,14 +16,13 @@ void Bindicator::handleButtonPress() {
 }
 
 bool Bindicator::shouldCheckCalendar() {
-    if (binTakenOutTime > 0 && !isAfterResetTime()) {
+    if (binTakenOutTime > 0) {
+        if (isAfterResetTime()) {
+            reset();
+            return true;
+        }
         return false;
     }
-
-    if (binTakenOutTime > 0 && isAfterResetTime()) {
-        reset();
-    }
-
     return true;
 }
 
