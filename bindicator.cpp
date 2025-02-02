@@ -93,15 +93,13 @@ bool Bindicator::isAfterResetTime() {
 
 void Bindicator::reset() {
     Serial.println("reset: Resetting bindicator state");
+    Command cmd = CMD_SHOW_NEITHER;
+    sendCommand(cmd);
+
     binTakenOutTime = 0;
     currentBinType = BinType::NONE;
     ConfigManager::setBinTakenOutTime(0);
     ConfigManager::setBinType(BinType::NONE);
-
-    if (currentBinType != BinType::NONE) {
-        Command cmd = CMD_SHOW_NEITHER;
-        sendCommand(cmd);
-    }
 }
 
 BinType Bindicator::getCurrentBinType() {
