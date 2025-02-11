@@ -2,9 +2,11 @@
 #include <time.h>
 #include "tasks.h"
 #include "config_manager.h"
+#include <Arduino.h>
 
 BindicatorState Bindicator::state = BindicatorState::LOADING;
 time_t Bindicator::completedTime = 0;
+unsigned long Bindicator::lastErrorTime = 0;
 
 void Bindicator::handleButtonPress() {
     if (state == BindicatorState::RECYCLING_DUE || state == BindicatorState::RUBBISH_DUE) {
@@ -13,7 +15,13 @@ void Bindicator::handleButtonPress() {
 }
 
 bool Bindicator::shouldCheckCalendar() {
-    if (isInErrorState() || isInSetupMode()) {
+    if (isInErrorState()) {
+        bool shouldRetry = shouldRetryAfterError();
+        Serial.printf("In error state, shouldRetry = %d\n", shouldRetry);
+        return shouldRetry;
+    }
+
+    if (isInSetupMode()) {
         return false;
     }
 
@@ -43,7 +51,32 @@ void Bindicator::updateFromCalendar(CollectionState collectionState) {
 }
 
 void Bindicator::setErrorState(ErrorType errorType) {
+    Serial.printf("Setting error state, current time = %lu\n", millis());
+    lastErrorTime = millis();
     transitionTo(errorType == ErrorType::WIFI ? BindicatorState::ERROR_WIFI : BindicatorState::ERROR_API);
+}
+
+void Bindicator::clearErrorState() {
+    if (isInErrorState()) {
+        Serial.println("Clearing error state");
+        lastErrorTime = 0;
+        transitionTo(BindicatorState::LOADING);
+    }
+}
+
+bool Bindicator::shouldRetryAfterError() {
+    unsigned long currentTime = millis();
+    unsigned long timeSinceError = currentTime - lastErrorTime;
+
+    // Handle millis() overflow
+    if (currentTime < lastErrorTime) {
+        timeSinceError = currentTime + (0xFFFFFFFF - lastErrorTime);
+    }
+
+    Serial.printf("Current time = %lu, lastErrorTime = %lu, timeSinceError = %lu, retry interval = %lu\n",
+                 currentTime, lastErrorTime, timeSinceError, ERROR_RETRY_INTERVAL_MS);
+
+    return timeSinceError >= ERROR_RETRY_INTERVAL_MS;
 }
 
 bool Bindicator::isInErrorState() {
@@ -146,6 +179,10 @@ void Bindicator::initializeFromStorage() {
     completedTime = ConfigManager::getCompletedTime();
 
     if (state == BindicatorState::COMPLETED && isAfterResetTime()) {
+        transitionTo(BindicatorState::LOADING);
+    } else if (state == BindicatorState::ERROR_WIFI || state == BindicatorState::ERROR_API) {
+        Serial.println("Starting up in error state - resetting to allow immediate retry");
+        lastErrorTime = 0;
         transitionTo(BindicatorState::LOADING);
     } else {
         sendStateCommand(state);

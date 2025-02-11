@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "display_handler.h"
 #include "tasks.h"
+#include "error_type.h"
 
 struct Color {
     uint8_t r;
@@ -11,12 +12,6 @@ struct Color {
 
     Color(uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0)
         : r(red), g(green), b(blue) {}
-};
-
-enum class ErrorType {
-    API,
-    WIFI,
-    OTHER
 };
 
 class Animations {
@@ -39,6 +34,7 @@ class Animations {
         static void drawPulse(DisplayHandler& display, Color color);
         static void drawBinImage(DisplayHandler& display, Color color);
         static void drawComplete(DisplayHandler& display, Color color);
+
     private:
         static const uint8_t exclamation[8][8];
         static const uint8_t binImage[8][8];

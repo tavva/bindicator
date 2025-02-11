@@ -113,6 +113,7 @@ void animationTask(void* parameter) {
 
 void calendarTask(void* parameter) {
     const TickType_t xDelay = pdMS_TO_TICKS(CALENDAR_CHECK_INTERVAL_MS);
+    const TickType_t WIFI_RETRY_DELAY = pdMS_TO_TICKS(10000);
 
     Command cmd = CMD_SHOW_LOADING;
     xQueueSend(commandQueue, &cmd, 0);
@@ -129,11 +130,18 @@ void calendarTask(void* parameter) {
     Serial.println("Time synced");
 
     while (true) {
-        while (WiFi.status() != WL_CONNECTED) {
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
+        bool wasInErrorState = Bindicator::isInErrorState();
 
-        Serial.println("\nCalendar check cycle starting");
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("WiFi disconnected, attempting to reconnect...");
+            WiFi.reconnect();
+
+            int attempts = 0;
+            while (WiFi.status() != WL_CONNECTED && attempts < 5) {
+                vTaskDelay(WIFI_RETRY_DELAY);
+                attempts++;
+            }
+        }
 
         if (!Bindicator::shouldCheckCalendar()) {
             Serial.println("Skipping calendar check - bin already taken out or wrong time");
@@ -147,6 +155,10 @@ void calendarTask(void* parameter) {
             bool hasRubbish = false;
 
             if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
+                if (wasInErrorState) {
+                    Bindicator::clearErrorState();
+                }
+
                 CollectionState state = CollectionState::NO_COLLECTION;
                 if (hasRecycling) {
                     state = CollectionState::RECYCLING_DUE;
@@ -159,7 +171,7 @@ void calendarTask(void* parameter) {
                 Bindicator::setErrorState(ErrorType::API);
             }
         } else {
-            Serial.println("WiFi not connected, skipping calendar check");
+            Serial.println("WiFi not connected, setting error state");
             Bindicator::setErrorState(ErrorType::WIFI);
         }
 
