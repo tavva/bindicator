@@ -1,5 +1,4 @@
-#ifndef BINDICATOR_H
-#define BINDICATOR_H
+#pragma once
 
 #include <Arduino.h>
 #include "tasks.h"
@@ -40,5 +39,3 @@ class Bindicator {
         static bool isAfterResetTime();
         static void sendCommand(Command cmd);
 };
-
-#endif

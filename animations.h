@@ -1,5 +1,4 @@
-#ifndef ANIMATIONS_H
-#define ANIMATIONS_H
+#pragma once
 
 #include <Arduino.h>
 #include "display_handler.h"
@@ -55,5 +54,3 @@ class Animations {
         static void updateLoadingPosition();
         static void drawError(DisplayHandler& display, Color stroke, Color dot);
 };
-
-#endif
