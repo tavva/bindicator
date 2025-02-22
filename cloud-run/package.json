@@ -1,0 +1,7 @@
+{
+    "name": "alldone",
+    "version": "1.0.0",
+    "description": "Google Cloud Function",
+    "main": "index.js",
+    "dependencies": {}
+}
