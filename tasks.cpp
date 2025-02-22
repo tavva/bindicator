@@ -114,6 +114,8 @@ void animationTask(void* parameter) {
 void calendarTask(void* parameter) {
     const TickType_t xDelay = pdMS_TO_TICKS(CALENDAR_CHECK_INTERVAL_MS);
     const TickType_t WIFI_RETRY_DELAY = pdMS_TO_TICKS(10000);
+    const int TIME_SYNC_MAX_RETRIES = 10;
+    const TickType_t TIME_SYNC_RETRY_DELAY = pdMS_TO_TICKS(30000);
 
     Command cmd = CMD_SHOW_LOADING;
     xQueueSend(commandQueue, &cmd, 0);
@@ -121,13 +123,24 @@ void calendarTask(void* parameter) {
     // Initial delay to allow system to stabilize and load state
     vTaskDelay(pdMS_TO_TICKS(5000));
 
-    struct tm timeinfo;
-    while (!getLocalTime(&timeinfo)) {
-        Serial.println("Waiting for time sync...");
-        setupTime();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    int timeSyncAttempts = 0;
+    while (timeSyncAttempts < TIME_SYNC_MAX_RETRIES) {
+        if (setupTime()) {
+            Serial.println("Time synced successfully");
+            break;
+        }
+        timeSyncAttempts++;
+
+        if (timeSyncAttempts < TIME_SYNC_MAX_RETRIES) {
+            Serial.printf("Time sync attempt %d failed, retrying in 30 seconds...\n", timeSyncAttempts);
+            vTaskDelay(TIME_SYNC_RETRY_DELAY);
+        } else {
+            Serial.println("Failed to sync time after maximum retries");
+            Bindicator::setErrorState(ErrorType::API);
+            vTaskDelay(xDelay);
+            continue;
+        }
     }
-    Serial.println("Time synced");
 
     while (true) {
         bool wasInErrorState = Bindicator::isInErrorState();
