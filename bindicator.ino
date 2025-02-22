@@ -84,6 +84,13 @@ void startSetupMode() {
             Serial.println("\nConnected to main network");
             Serial.print("Station IP Address: ");
             Serial.println(WiFi.localIP());
+
+            Serial.println("Attempting to sync time...");
+            if (setupTime()) {
+                Serial.println("Time sync successful");
+            } else {
+                Serial.println("Time sync failed - calendar functions may be limited");
+            }
         }
     }
 
