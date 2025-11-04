@@ -55,3 +55,15 @@ monitor:
 		echo "No connection, restarting..."; \
 		sleep 1; \
 	done
+
+# Simulator targets
+simulator:
+	cd simulator && $(MAKE)
+
+sim-run:
+	cd simulator && $(MAKE) run
+
+sim-clean:
+	cd simulator && $(MAKE) clean
+
+.PHONY: simulator sim-run sim-clean

@@ -6,3 +6,11 @@ credentials.json
 *.o
 tests/unit/utils_test
 .worktrees/
+
+# Simulator
+simulator/simulator
+simulator/*.o
+simulator/mocks/*.o
+simulator/mocks/freertos/*.o
+simulator-state.json
+.env
