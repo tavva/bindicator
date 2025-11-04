@@ -5,3 +5,4 @@ credentials.json
 
 *.o
 tests/unit/utils_test
+.worktrees/
