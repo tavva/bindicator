@@ -16,12 +16,36 @@ void SerialClass::println(const String& str) {
     std::cout << str << std::endl;
 }
 
+void SerialClass::println(int value) {
+    std::cout << value << std::endl;
+}
+
+void SerialClass::println(unsigned long value) {
+    std::cout << value << std::endl;
+}
+
+void SerialClass::println(double value) {
+    std::cout << value << std::endl;
+}
+
 void SerialClass::print(const char* str) {
     std::cout << str;
 }
 
 void SerialClass::print(const String& str) {
     std::cout << str;
+}
+
+void SerialClass::print(int value) {
+    std::cout << value;
+}
+
+void SerialClass::print(unsigned long value) {
+    std::cout << value;
+}
+
+void SerialClass::print(double value) {
+    std::cout << value;
 }
 
 void SerialClass::printf(const char* format, ...) {

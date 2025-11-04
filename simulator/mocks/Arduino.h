@@ -36,8 +36,14 @@ public:
     void begin(unsigned long baud) {}
     void println(const char* str);
     void println(const String& str);
+    void println(int value);
+    void println(unsigned long value);
+    void println(double value);
     void print(const char* str);
     void print(const String& str);
+    void print(int value);
+    void print(unsigned long value);
+    void print(double value);
     void printf(const char* format, ...);
 
     bool available() { return false; }
