@@ -1,14 +1,17 @@
 #pragma once
+#include <cstdint>
+#include <mutex>
 
 class SimulatedTime {
 public:
-    static unsigned long millis();
-    static void advance(unsigned long ms);
-    static void setTime(unsigned long ms);
+    static uint32_t millis();
+    static void advance(uint32_t ms);
+    static void setTime(uint32_t ms);
     static void setMultiplier(float multiplier);
     static void reset();
 
 private:
-    static unsigned long baseTime;
+    static uint32_t baseTime;
     static float timeMultiplier;
+    static std::mutex timeMutex;
 };

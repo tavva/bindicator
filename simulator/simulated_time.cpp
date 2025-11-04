@@ -3,28 +3,35 @@
 
 #include "simulated_time.h"
 #include <cstdint>
+#include <mutex>
 
-unsigned long SimulatedTime::baseTime = 0;
+uint32_t SimulatedTime::baseTime = 0;
 float SimulatedTime::timeMultiplier = 1.0f;
+std::mutex SimulatedTime::timeMutex;
 
-unsigned long SimulatedTime::millis() {
+uint32_t SimulatedTime::millis() {
+    std::lock_guard<std::mutex> lock(timeMutex);
     return baseTime;
 }
 
-void SimulatedTime::advance(unsigned long ms) {
-    unsigned long delta = static_cast<unsigned long>(ms * timeMultiplier);
-    baseTime = static_cast<uint32_t>(baseTime + delta);
+void SimulatedTime::advance(uint32_t ms) {
+    std::lock_guard<std::mutex> lock(timeMutex);
+    uint32_t delta = static_cast<uint32_t>(ms * timeMultiplier);
+    baseTime = baseTime + delta;
 }
 
-void SimulatedTime::setTime(unsigned long ms) {
+void SimulatedTime::setTime(uint32_t ms) {
+    std::lock_guard<std::mutex> lock(timeMutex);
     baseTime = ms;
 }
 
 void SimulatedTime::setMultiplier(float multiplier) {
+    std::lock_guard<std::mutex> lock(timeMutex);
     timeMultiplier = multiplier;
 }
 
 void SimulatedTime::reset() {
+    std::lock_guard<std::mutex> lock(timeMutex);
     baseTime = 0;
     timeMultiplier = 1.0f;
 }
