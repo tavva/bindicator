@@ -4,7 +4,7 @@ CXXFLAGS += -Imocks -Imocks/freertos -I..
 LDFLAGS = -pthread -lcurl
 
 TARGET = simulator
-SRCS = main.cpp
+SRCS = main.cpp simulated_time.cpp terminal_display.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 .PHONY: all clean run
