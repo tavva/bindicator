@@ -343,14 +343,134 @@ jump +50d                  # Test millis overflow at 49 days
 stats                      # Show memory usage, queue depths
 ```
 
-## Known Limitations
+## Known Limitations & Technical Considerations
 
-- LED matrix animations won't look identical (terminal vs physical LEDs)
+### FreeRTOS Threading Model
+
+The simulator uses pthreads to emulate FreeRTOS tasks. Known scheduling differences:
+
+**Priority Handling**
+- FreeRTOS: Strict priority preemption (higher priority always runs)
+- Pthreads: OS-level scheduling, priorities are hints not guarantees
+- **Impact**: High-priority animation task may not always preempt calendar task
+- **Mitigation**: Use condition variables for critical synchronization, not priority alone
+
+**Task Pinning**
+- FreeRTOS: Tasks pinned to specific cores (animation on Core 1, calendar on Core 0)
+- Pthreads: OS decides thread placement, no guaranteed core affinity on macOS
+- **Impact**: Concurrent execution patterns may differ slightly
+- **Mitigation**: Use proper synchronization primitives (mutexes, condition variables) rather than relying on task pinning
+
+**Queue Behaviour**
+- FreeRTOS: Fixed-size queues with blocking/non-blocking send/receive
+- Pthread implementation: Mutex-protected deque with condition variables
+- **Expected differences**: Timing of queue full/empty conditions under high load
+- **Mitigation**: Prototype early and document actual behaviour vs ESP-IDF
+
+**Time Slicing**
+- FreeRTOS: Configurable tick rate (typically 1ms on ESP32)
+- Pthreads: OS time slicing (macOS uses ~10ms quanta)
+- **Impact**: Tight timing loops may behave differently
+- **Mitigation**: Don't rely on sub-10ms timing precision in tests
+
+**Testing Strategy**: Integration tests should focus on functional correctness (state transitions, API interactions) rather than precise timing or priority behaviour.
+
+### Display Rendering
+
+**Terminal Requirements**
+- UTF-8 locale support (for Unicode block characters: █ ▀ ▄)
+- ANSI color code support (ESC sequences)
+- Minimum 80x24 terminal size
+- Monospace font required for proper alignment
+
+**Terminal Detection**
+The simulator will detect capabilities at startup:
+```cpp
+bool detectTerminalCapabilities() {
+    // Check TERM environment variable
+    // Test for UTF-8 support
+    // Verify ANSI color codes work
+    // Measure terminal dimensions
+}
+```
+
+**Graceful Degradation**
+- No UTF-8: Fall back to ASCII characters (#, *, @)
+- No colors: Use brightness indicators (█ = full, ▓ = medium, ▒ = low)
+- Small terminal: Display state text-only without matrix
+- Warnings printed to stderr if features unavailable
+
+**Visual Fidelity**
+- Terminal rendering is approximate, not pixel-perfect
+- Animation timing may differ from hardware refresh rate
+- Colors may not match physical LEDs exactly
+
+### Other Hardware Differences
+
 - Network timing differs from ESP32 WiFi chip
-- Thread scheduling may differ from FreeRTOS
-- No actual hardware peripherals (SPI, I2C)
+- No actual hardware peripherals (SPI, I2C, GPIO)
+- Memory allocation patterns differ (heap vs PSRAM)
+- Flash writes (Preferences) are file I/O, not NVS flash
 
 These limitations don't affect business logic testing, which is the primary goal.
+
+## Credential Management
+
+### OAuth Secrets
+
+The simulator needs Google OAuth credentials (client ID and secret) to authenticate with Google Calendar API in real-network mode.
+
+**Development Environment**
+Credentials loaded from environment variables or `.env` file (git-ignored):
+```bash
+# .env (not committed)
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxx
+GOOGLE_REDIRECT_URI=https://your-cloud-run-url/callback
+```
+
+Simulator reads these on startup:
+```cpp
+const char* clientId = getenv("GOOGLE_CLIENT_ID");
+const char* clientSecret = getenv("GOOGLE_CLIENT_SECRET");
+```
+
+If not set, simulator warns and falls back to mock mode automatically.
+
+**CI/CD Environment**
+GitHub Actions secrets injected as environment variables:
+```yaml
+- name: Run simulator integration tests
+  env:
+    GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+    GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  run: |
+    make simulator
+    ./tests/integration/run_all.sh
+```
+
+**Mock Mode (Default for CI)**
+Most CI tests should use `--mock` mode to avoid:
+- Credential leakage risk
+- API rate limits
+- Network flakiness
+- Requiring real OAuth setup
+
+Only a small subset of integration tests should exercise real OAuth flow, and these should:
+- Use a dedicated test Google account
+- Run in a protected CI environment (not on forks)
+- Store refresh token in CI secrets (not client secret)
+
+**Security Best Practices**
+- Never commit credentials to git
+- `.env` file in `.gitignore`
+- `simulator-state.json` (contains refresh token) in `.gitignore`
+- Use dedicated OAuth client for simulator (not production credentials)
+- Rotate credentials if accidentally leaked
+
+### WiFi Credentials
+
+Not needed for simulator (no actual WiFi connection). ConfigManager stores them in `simulator-state.json` but they're not used for network operations.
 
 ## Success Criteria
 
@@ -368,6 +488,98 @@ These limitations don't affect business logic testing, which is the primary goal
 - **pthread** (included with macOS/Linux)
 - **libcurl** (for real HTTP requests)
 - **Standard libraries** (no external dependencies beyond above)
+
+## Implementation Approach
+
+### Phase 1: Core Infrastructure (Prototype Critical Components)
+
+**1. FreeRTOS Queue Implementation**
+Build and validate pthread-based queue early to understand behaviour under load:
+```cpp
+// simulator/mocks/freertos/queue_test.cpp
+// Test: Multiple producers, single consumer
+// Test: Queue full/empty conditions
+// Test: Timeout behaviour
+// Document: Observed differences from ESP-IDF
+```
+
+Load testing scenarios:
+- 10 producers sending to same queue
+- Queue full conditions with `xQueueSend(q, data, 0)` (non-blocking)
+- Queue full conditions with `xQueueSend(q, data, portMAX_DELAY)` (blocking)
+- Measure timing differences vs expected FreeRTOS behaviour
+
+**Output**: Documented queue behaviour and any known deviations to inform test expectations.
+
+**2. Terminal Capability Detection**
+Implement early to avoid confusing rendering issues:
+```cpp
+// simulator/terminal_display.cpp
+TerminalCapabilities detectCapabilities() {
+    // Check TERM, COLORTERM environment variables
+    // Test UTF-8 by writing test character
+    // Probe for 256-color support
+    // Detect terminal size
+}
+```
+
+**3. Time Simulation Core**
+Basic time control without full firmware integration:
+```cpp
+// simulator/simulator_config.cpp
+class SimulatedTime {
+    unsigned long baseTime;
+    float multiplier;
+    unsigned long millis();
+    void advance(unsigned long ms);
+    void setMultiplier(float x);
+};
+```
+
+### Phase 2: Mock Layer Completion
+
+1. Arduino core APIs (millis, delay, Serial)
+2. WiFi mock with mode switching
+3. HTTPClient mock with canned responses
+4. Preferences with JSON backend
+5. DisplayHandler with terminal renderer
+
+Each mock should have standalone test before integration.
+
+### Phase 3: Firmware Integration
+
+1. Compile first firmware file (bindicator.cpp) with mocks
+2. Add files incrementally: config_manager, oauth_handler, calendar_handler
+3. Validate each addition compiles and links
+4. Run firmware `setup()` and `loop()` functions
+
+### Phase 4: Interactive Runtime
+
+1. Command parser and stdin handling
+2. Display rendering loop
+3. Time control commands
+4. State inspection commands
+
+### Phase 5: Testing & Validation
+
+1. Create mock API responses for common scenarios
+2. Write integration tests
+3. Validate critical bugs can be reproduced (millis overflow, state desync)
+4. Document remaining limitations
+
+### Risk Mitigation
+
+**Risk: pthread queue behaviour differs significantly**
+- Mitigation: Prototype in Phase 1, document differences, adjust test expectations
+- Fallback: Use single-threaded event loop if threading proves problematic
+
+**Risk: Terminal rendering issues across platforms**
+- Mitigation: Detect capabilities early, graceful degradation
+- Fallback: Text-only mode with no graphics
+
+**Risk: libcurl integration complexity**
+- Mitigation: Start with mock-only mode, add real network later
+- Fallback: Stay mock-only if real HTTP proves difficult
 
 ## Future Enhancements (Not in Scope)
 
