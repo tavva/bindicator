@@ -22,9 +22,23 @@ static void* loopThread(void* arg) {
     return nullptr;
 }
 
+// Initialize display area before any output
+void initDisplayArea() {
+    std::cout << "\033[2J\033[H";  // Clear screen, move to home
+    std::cout << "Bindicator Simulator v0.1\n\n";
+    std::cout << "=== LED Matrix Display ===\n\n";
+
+    // Reserve space for 8x8 matrix
+    for (int i = 0; i < 8; i++) {
+        std::cout << "\n";
+    }
+    std::cout << "\n=== Console Output ===\n";
+    std::cout << "Initializing firmware...\n";
+    std::cout.flush();
+}
+
 int main(int argc, char** argv) {
-    std::cout << "Bindicator Simulator v0.1" << std::endl;
-    std::cout << "Initializing firmware..." << std::endl;
+    initDisplayArea();
 
     // Run firmware setup
     setup();

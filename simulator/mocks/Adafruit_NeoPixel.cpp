@@ -5,31 +5,15 @@
 #include <iostream>
 
 void Adafruit_NeoPixel::show() {
-    static bool firstShow = true;
-
     // Assume 8x8 matrix (64 pixels) for Bindicator
     const int WIDTH = 8;
     const int HEIGHT = 8;
 
-    if (firstShow) {
-        // Clear screen and set up display area
-        std::cout << "\033[2J\033[H";  // Clear screen, move to home
-        std::cout << "=== LED Matrix Display ===\n\n";
-
-        // Reserve space for matrix (8 lines)
-        for (int i = 0; i < HEIGHT; i++) {
-            std::cout << "\n";
-        }
-        std::cout << "\n=== Console Output ===\n";
-        std::cout.flush();
-        firstShow = false;
-    }
-
     // Save cursor position
     std::cout << "\033[s";
 
-    // Move to matrix area (line 3, after header)
-    std::cout << "\033[3;1H";
+    // Move to matrix area (line 4, after headers)
+    std::cout << "\033[4;1H";
 
     // Render each row
     for (int y = 0; y < HEIGHT; y++) {
