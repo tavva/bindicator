@@ -1,12 +1,12 @@
 CXX = g++
 CXXFLAGS = -std=c++14 -Wall -DSIMULATOR -DTESTING
 CXXFLAGS += -Imocks -Imocks/freertos -I..
-LDFLAGS = -pthread -lcurl
+LDFLAGS = -pthread -lcurl -lncurses
 
 TARGET = simulator
 
 # Simulator sources
-SIM_SRCS = main.cpp simulated_time.cpp terminal_display.cpp
+SIM_SRCS = main.cpp simulated_time.cpp terminal_display.cpp ncurses_display.cpp
 
 # Mock sources
 MOCK_SRCS = mocks/Arduino.cpp mocks/Preferences.cpp \

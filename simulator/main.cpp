@@ -5,7 +5,8 @@
 #include <string>
 #include <pthread.h>
 #include <unistd.h>
-#include "terminal_display.h"
+#include <signal.h>
+#include "ncurses_display.h"
 #include "mocks/Arduino.h"
 
 // Firmware entry points (defined in bindicator.ino)
@@ -22,49 +23,42 @@ static void* loopThread(void* arg) {
     return nullptr;
 }
 
-// Initialize display area before any output
-void initDisplayArea() {
-    std::cout << "\033[2J\033[H";  // Clear screen, move to home
-    std::cout << "Bindicator Simulator v0.1\n\n";
-    std::cout << "=== LED Matrix Display ===\n\n";
-
-    // Reserve space for 8x8 matrix
-    for (int i = 0; i < 8; i++) {
-        std::cout << "\n";
-    }
-    std::cout << "\n=== Console Output ===\n";
-    std::cout << "Initializing firmware...\n";
-    std::cout.flush();
+// Signal handler for clean exit
+void signalHandler(int signum) {
+    running = false;
 }
 
 int main(int argc, char** argv) {
-    initDisplayArea();
+    // Set up signal handlers for clean exit
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+
+    // Initialize ncurses display
+    NcursesDisplay::init();
+    NcursesDisplay::printConsole("Bindicator Simulator v0.1\n");
+    NcursesDisplay::printConsole("Initializing firmware...\n");
 
     // Run firmware setup
     setup();
 
-    std::cout << "\nFirmware initialized. Type 'help' for commands" << std::endl;
+    NcursesDisplay::printConsole("\nFirmware initialized. Press Ctrl+C to exit\n");
 
     // Start firmware loop in background thread
     pthread_t loop_thread;
     pthread_create(&loop_thread, nullptr, loopThread, nullptr);
 
-    std::string command;
-    while (std::getline(std::cin, command)) {
-        if (command == "quit" || command == "exit") {
-            running = false;
-            break;
-        } else if (command == "help") {
-            std::cout << "Available commands:" << std::endl;
-            std::cout << "  help  - Show this message" << std::endl;
-            std::cout << "  quit  - Exit simulator" << std::endl;
-        } else {
-            std::cout << "Unknown command: " << command << std::endl;
-        }
+    // Main thread just keeps display refreshing
+    while (running) {
+        NcursesDisplay::refresh();
+        usleep(100000);  // 100ms
     }
 
     // Wait for loop thread to finish
+    running = false;
     pthread_join(loop_thread, nullptr);
+
+    // Cleanup
+    NcursesDisplay::cleanup();
 
     return 0;
 }
