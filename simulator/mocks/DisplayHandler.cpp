@@ -1,65 +1,6 @@
 // ABOUTME: Display handler mock for simulator
-// ABOUTME: Renders 8x8 LED matrix to terminal using ANSI color codes
+// ABOUTME: No implementation needed - rendering happens in Adafruit_NeoPixel
 
 #include "DisplayHandler.h"
-#include "../terminal_display.h"
-#include <iostream>
 
-void Adafruit_NeoMatrix::show() {
-    static TerminalDisplay display;
-    static bool firstShow = true;
-    static int callCount = 0;
-    callCount++;
-
-    if (callCount == 1) {
-        std::cout << "[DEBUG] show() called for first time\n";
-    }
-
-    if (firstShow) {
-        // On first show, print the initial matrix without moving cursor
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                uint32_t color = pixels[y * 8 + x];
-                uint8_t r = (color >> 16) & 0xFF;
-                uint8_t g = (color >> 8) & 0xFF;
-                uint8_t b = color & 0xFF;
-
-                if (r > 0 || g > 0 || b > 0) {
-                    std::cout << "\033[48;2;" << (int)r << ";" << (int)g << ";" << (int)b << "m  \033[0m";
-                } else {
-                    std::cout << "  ";
-                }
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n";
-        std::cout.flush();
-        firstShow = false;
-        return;
-    }
-
-    // Move cursor up to redraw in place
-    std::cout << "\033[9A";  // Move up 9 lines (8 for matrix + 1 for spacing)
-
-    // Render each row
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-            uint32_t color = pixels[y * 8 + x];
-
-            // Extract RGB components
-            uint8_t r = (color >> 16) & 0xFF;
-            uint8_t g = (color >> 8) & 0xFF;
-            uint8_t b = color & 0xFF;
-
-            // Use ANSI 24-bit color if pixel is lit
-            if (r > 0 || g > 0 || b > 0) {
-                std::cout << "\033[48;2;" << (int)r << ";" << (int)g << ";" << (int)b << "m  \033[0m";
-            } else {
-                std::cout << "  "; // Dark pixel
-            }
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
-    std::cout.flush();
-}
+// No implementation needed - all inline
