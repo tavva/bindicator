@@ -7,6 +7,7 @@ TARGET = simulator
 SRCS = main.cpp simulated_time.cpp terminal_display.cpp \
        mocks/Arduino.cpp mocks/Preferences.cpp \
        mocks/WiFi.cpp mocks/HTTPClient.cpp \
+       mocks/ESPmDNS.cpp mocks/ESP.cpp \
        mocks/freertos/queue.cpp mocks/freertos/task.cpp
 OBJS = $(SRCS:.cpp=.o)
 
