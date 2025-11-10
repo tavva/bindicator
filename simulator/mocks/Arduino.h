@@ -2,12 +2,29 @@
 
 #include <cstdint>
 #include <string>
+#include <time.h>
 #include "../simulated_time.h"
 
 // Arduino basic types
 typedef bool boolean;
 typedef uint8_t byte;
-typedef std::string String;
+
+// Arduino String class (wraps std::string with Arduino API)
+class String : public std::string {
+public:
+    String() : std::string() {}
+    String(const char* str) : std::string(str ? str : "") {}
+    String(const std::string& str) : std::string(str) {}
+    String(int val) : std::string(std::to_string(val)) {}
+    String(unsigned int val) : std::string(std::to_string(val)) {}
+    String(long val) : std::string(std::to_string(val)) {}
+    String(unsigned long val) : std::string(std::to_string(val)) {}
+    String(double val) : std::string(std::to_string(val)) {}
+
+    bool isEmpty() const { return empty(); }
+    int toInt() const { return std::stoi(*this); }
+    double toDouble() const { return std::stod(*this); }
+};
 
 // Arduino constants
 #define HIGH 1
@@ -23,6 +40,13 @@ inline unsigned long millis() {
 
 inline void delay(unsigned long ms) {
     SimulatedTime::advance(ms);
+}
+
+// ESP32 time functions
+inline bool getLocalTime(struct tm* info, uint32_t ms = 5000) {
+    time_t now = time(nullptr);
+    localtime_r(&now, info);
+    return true;
 }
 
 // Pin functions (no-op for simulator)

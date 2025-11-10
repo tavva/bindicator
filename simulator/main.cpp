@@ -4,9 +4,25 @@
 #include <iostream>
 #include <string>
 #include "terminal_display.h"
+#include "mocks/freertos/FreeRTOS.h"
+#include "mocks/freertos/queue.h"
+
+// Firmware globals (needed by firmware code)
+QueueHandle_t commandQueue;
+bool isBin = false;
+uint8_t Matrix_Data[8][8] = {{0}};
+uint8_t RGB_Data1[64][3] = {{0}};
 
 int main(int argc, char** argv) {
     std::cout << "Bindicator Simulator v0.1" << std::endl;
+
+    // Initialize firmware globals
+    commandQueue = xQueueCreate(10, sizeof(int));
+    if (!commandQueue) {
+        std::cerr << "Failed to create command queue" << std::endl;
+        return 1;
+    }
+
     std::cout << "Type 'help' for commands" << std::endl;
 
     std::string command;
