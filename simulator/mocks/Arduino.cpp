@@ -2,6 +2,7 @@
 // ABOUTME: Provides Serial output, pin operations, and basic Arduino functions
 
 #include "Arduino.h"
+#include "WiFi.h"
 #include <iostream>
 #include <cstdarg>
 #include <cstdio>
@@ -14,6 +15,10 @@ void SerialClass::println(const char* str) {
 
 void SerialClass::println(const String& str) {
     std::cout << str << std::endl;
+}
+
+void SerialClass::println(const IPAddress& ip) {
+    std::cout << ip.toString() << std::endl;
 }
 
 void SerialClass::println(int value) {

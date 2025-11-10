@@ -28,9 +28,16 @@ public:
 
     bool hasArg(const String& name) { return false; }
     String arg(const String& name) { return ""; }
+
+    void send(int code) {
+        Serial.print("HTTP ");
+        Serial.println(code);
+    }
+
     void send(int code, const String& contentType, const String& content) {
         Serial.println(content);
     }
+
     void sendHeader(const String& name, const String& value) {}
 
 private:

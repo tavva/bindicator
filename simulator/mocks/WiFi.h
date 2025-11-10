@@ -34,6 +34,9 @@ public:
     IPAddress localIP();
     void reconnect();
     bool softAP(const char* ssid, const char* password);
+    bool softAP(const char* ssid, const String& password) {
+        return softAP(ssid, password.c_str());
+    }
 
 private:
     wl_status_t currentStatus = WL_DISCONNECTED;

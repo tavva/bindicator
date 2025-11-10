@@ -4,28 +4,36 @@
 #include <map>
 #include <vector>
 
+class JsonArray;
+
 // Minimal ArduinoJson mock - just enough for our firmware
 class JsonVariant {
 public:
-    JsonVariant() : strValue(""), intValue(0) {}
+    JsonVariant() : strValue(""), intValue(0), isArray(false) {}
 
+    // Template method for conversions
     template<typename T>
     T as() const;
 
-    const char* as<const char*>() const { return strValue.c_str(); }
-    String as<String>() const { return strValue; }
-    int as<int>() const { return intValue; }
-
     void setString(const String& s) { strValue = s; }
     void setInt(int i) { intValue = i; }
+    void setArray(JsonArray* arr) { arrayValue = arr; isArray = true; }
 
-    String operator[](const char* key) const {
-        return strValue;
-    }
+    // Implicit conversion operators
+    operator int() const { return intValue; }
+    operator String() const { return strValue; }
+    operator const char*() const { return strValue.c_str(); }
+    operator JsonArray() const;
+
+    JsonVariant operator[](const char* key) const;
 
 private:
     String strValue;
     int intValue;
+    bool isArray;
+    JsonArray* arrayValue = nullptr;
+
+    friend class JsonArray;
 };
 
 class JsonArray {
@@ -58,13 +66,10 @@ public:
         return data[key];
     }
 
-    JsonArray createNestedArray(const char* key) {
-        return JsonArray();
-    }
+    JsonArray createNestedArray(const char* key);
 
-    JsonArray as<JsonArray>() {
-        return JsonArray();
-    }
+    template<typename T>
+    T as();
 
 private:
     std::map<String, JsonVariant> data;
@@ -81,15 +86,33 @@ public:
     StaticJsonDocument() {}
 };
 
-enum class DeserializationError {
-    Ok,
-    NoMemory,
-    InvalidInput
+class DeserializationError {
+public:
+    enum Code {
+        Ok,
+        NoMemory,
+        InvalidInput
+    };
+
+    DeserializationError(Code code = Ok) : code_(code) {}
+
+    operator bool() const { return code_ != Ok; }
+    const char* c_str() const {
+        switch (code_) {
+            case Ok: return "Ok";
+            case NoMemory: return "NoMemory";
+            case InvalidInput: return "InvalidInput";
+            default: return "Unknown";
+        }
+    }
+
+private:
+    Code code_;
 };
 
 inline DeserializationError deserializeJson(JsonDocument& doc, const String& input) {
     // Simple mock - doesn't actually parse JSON
-    return DeserializationError::Ok;
+    return DeserializationError(DeserializationError::Ok);
 }
 
 inline void serializeJson(const JsonDocument& doc, String& output) {

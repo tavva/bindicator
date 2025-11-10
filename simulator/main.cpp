@@ -3,60 +3,54 @@
 
 #include <iostream>
 #include <string>
+#include <pthread.h>
+#include <unistd.h>
 #include "terminal_display.h"
-#include "mocks/freertos/FreeRTOS.h"
-#include "mocks/freertos/queue.h"
+#include "mocks/Arduino.h"
 
-// Firmware globals (needed by firmware code)
-QueueHandle_t commandQueue;
-bool isBin = false;
-uint8_t Matrix_Data[8][8] = {{0}};
-uint8_t RGB_Data1[64][3] = {{0}};
+// Firmware entry points (defined in bindicator.ino)
+extern void setup();
+extern void loop();
+
+static bool running = true;
+
+static void* loopThread(void* arg) {
+    while (running) {
+        loop();
+        usleep(10000);  // 10ms delay
+    }
+    return nullptr;
+}
 
 int main(int argc, char** argv) {
     std::cout << "Bindicator Simulator v0.1" << std::endl;
+    std::cout << "Initializing firmware..." << std::endl;
 
-    // Initialize firmware globals
-    commandQueue = xQueueCreate(10, sizeof(int));
-    if (!commandQueue) {
-        std::cerr << "Failed to create command queue" << std::endl;
-        return 1;
-    }
+    // Run firmware setup
+    setup();
 
-    std::cout << "Type 'help' for commands" << std::endl;
+    std::cout << "\nFirmware initialized. Type 'help' for commands" << std::endl;
+
+    // Start firmware loop in background thread
+    pthread_t loop_thread;
+    pthread_create(&loop_thread, nullptr, loopThread, nullptr);
 
     std::string command;
     while (std::getline(std::cin, command)) {
         if (command == "quit" || command == "exit") {
+            running = false;
             break;
         } else if (command == "help") {
             std::cout << "Available commands:" << std::endl;
             std::cout << "  help  - Show this message" << std::endl;
-            std::cout << "  test  - Test terminal capabilities" << std::endl;
             std::cout << "  quit  - Exit simulator" << std::endl;
-        } else if (command == "test") {
-            TerminalDisplay display;
-            auto caps = display.getCapabilities();
-            std::cout << "Terminal capabilities:" << std::endl;
-            std::cout << "  UTF-8: " << (caps.hasUTF8 ? "yes" : "no") << std::endl;
-            std::cout << "  Color: " << (caps.hasColor ? "yes" : "no") << std::endl;
-            std::cout << "  256-color: " << (caps.has256Color ? "yes" : "no") << std::endl;
-            std::cout << "  Size: " << caps.width << "x" << caps.height << std::endl;
-
-            display.clear();
-            display.moveCursor(1, 1);
-            display.setColor(255, 0, 0);
-            display.printBlock();
-            display.setColor(0, 255, 0);
-            display.printBlock();
-            display.setColor(0, 0, 255);
-            display.printBlock();
-            display.resetColor();
-            std::cout << " Color test" << std::endl;
         } else {
             std::cout << "Unknown command: " << command << std::endl;
         }
     }
+
+    // Wait for loop thread to finish
+    pthread_join(loop_thread, nullptr);
 
     return 0;
 }
