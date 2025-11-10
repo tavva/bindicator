@@ -106,9 +106,7 @@ void animationTask(void* parameter) {
             Animations::drawPulse(display, color);
         }
 
-        Serial.println("[ANIMATION] About to call show()");
         display.matrix.show();
-        Serial.println("[ANIMATION] show() returned");
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
