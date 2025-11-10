@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Arduino.h"
+#include <iostream>
 
 // Mock Adafruit_NeoPixel for simulator
 class Adafruit_NeoPixel {

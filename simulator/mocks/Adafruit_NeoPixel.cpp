@@ -9,6 +9,7 @@ void Adafruit_NeoPixel::show() {
     const int WIDTH = 8;
     const int HEIGHT = 8;
 
+
     // Save cursor position
     std::cout << "\033[s";
 
