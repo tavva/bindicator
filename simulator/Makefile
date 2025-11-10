@@ -5,7 +5,7 @@ LDFLAGS = -pthread -lcurl
 
 TARGET = simulator
 SRCS = main.cpp simulated_time.cpp terminal_display.cpp \
-       mocks/Arduino.cpp \
+       mocks/Arduino.cpp mocks/Preferences.cpp \
        mocks/freertos/queue.cpp mocks/freertos/task.cpp
 OBJS = $(SRCS:.cpp=.o)
 
