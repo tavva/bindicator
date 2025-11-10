@@ -13,6 +13,7 @@ MOCK_SRCS = mocks/Arduino.cpp mocks/Preferences.cpp \
             mocks/WiFi.cpp mocks/HTTPClient.cpp \
             mocks/ESPmDNS.cpp mocks/ESP.cpp mocks/DisplayHandler.cpp \
             mocks/ArduinoJson.cpp mocks/secrets.cpp \
+            mocks/Adafruit_NeoPixel.cpp \
             mocks/freertos/queue.cpp mocks/freertos/task.cpp
 
 # Firmware sources (relative to parent directory)

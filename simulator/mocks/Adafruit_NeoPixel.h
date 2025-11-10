@@ -4,18 +4,37 @@
 
 // Mock Adafruit_NeoPixel for simulator
 class Adafruit_NeoPixel {
+private:
+    uint16_t numPixels;
+    uint8_t pin;
+    uint8_t brightness = 255;
+    uint32_t* pixels;
+
 public:
     Adafruit_NeoPixel(uint16_t n, uint8_t pin, uint8_t type = 0)
-        : numPixels(n), pin(pin) {}
+        : numPixels(n), pin(pin) {
+        pixels = new uint32_t[n];
+        clear();
+    }
+
+    ~Adafruit_NeoPixel() {
+        delete[] pixels;
+    }
 
     void begin() {}
-    void show() {}
-    void clear() {}
+
+    void show();  // Implemented in .cpp file
+
+    void clear() {
+        for (uint16_t i = 0; i < numPixels; i++) {
+            pixels[i] = 0;
+        }
+    }
     void setBrightness(uint8_t brightness) { this->brightness = brightness; }
 
     void setPixelColor(uint16_t n, uint32_t color) {
         if (n < numPixels) {
-            // Store color for potential terminal display
+            pixels[n] = color;
         }
     }
 
@@ -28,7 +47,10 @@ public:
     }
 
     uint32_t getPixelColor(uint16_t n) const {
-        return 0; // Mock
+        if (n < numPixels) {
+            return pixels[n];
+        }
+        return 0;
     }
 
     void fill(uint32_t color, uint16_t first = 0, uint16_t count = 0) {
@@ -38,10 +60,6 @@ public:
         }
     }
 
-private:
-    uint16_t numPixels;
-    uint8_t pin;
-    uint8_t brightness = 255;
 };
 
 // NeoPixel constants

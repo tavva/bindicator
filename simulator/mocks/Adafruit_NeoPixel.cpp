@@ -1,25 +1,21 @@
-// ABOUTME: Display handler mock for simulator
-// ABOUTME: Renders 8x8 LED matrix to terminal using ANSI color codes
+// ABOUTME: Adafruit_NeoPixel mock implementation for simulator
+// ABOUTME: Renders LED matrix to terminal using ANSI 24-bit color codes
 
-#include "DisplayHandler.h"
-#include "../terminal_display.h"
+#include "Adafruit_NeoPixel.h"
 #include <iostream>
 
-void Adafruit_NeoMatrix::show() {
-    static TerminalDisplay display;
+void Adafruit_NeoPixel::show() {
     static bool firstShow = true;
-    static int callCount = 0;
-    callCount++;
 
-    if (callCount == 1) {
-        std::cout << "[DEBUG] show() called for first time\n";
-    }
+    // Assume 8x8 matrix (64 pixels) for Bindicator
+    const int WIDTH = 8;
+    const int HEIGHT = 8;
 
     if (firstShow) {
         // On first show, print the initial matrix without moving cursor
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                uint32_t color = pixels[y * 8 + x];
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int x = 0; x < WIDTH; x++) {
+                uint32_t color = pixels[y * WIDTH + x];
                 uint8_t r = (color >> 16) & 0xFF;
                 uint8_t g = (color >> 8) & 0xFF;
                 uint8_t b = color & 0xFF;
@@ -42,9 +38,9 @@ void Adafruit_NeoMatrix::show() {
     std::cout << "\033[9A";  // Move up 9 lines (8 for matrix + 1 for spacing)
 
     // Render each row
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-            uint32_t color = pixels[y * 8 + x];
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            uint32_t color = pixels[y * WIDTH + x];
 
             // Extract RGB components
             uint8_t r = (color >> 16) & 0xFF;
