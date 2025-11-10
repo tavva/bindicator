@@ -12,30 +12,24 @@ void Adafruit_NeoPixel::show() {
     const int HEIGHT = 8;
 
     if (firstShow) {
-        // On first show, print the initial matrix without moving cursor
-        for (int y = 0; y < HEIGHT; y++) {
-            for (int x = 0; x < WIDTH; x++) {
-                uint32_t color = pixels[y * WIDTH + x];
-                uint8_t r = (color >> 16) & 0xFF;
-                uint8_t g = (color >> 8) & 0xFF;
-                uint8_t b = color & 0xFF;
+        // Clear screen and set up display area
+        std::cout << "\033[2J\033[H";  // Clear screen, move to home
+        std::cout << "=== LED Matrix Display ===\n\n";
 
-                if (r > 0 || g > 0 || b > 0) {
-                    std::cout << "\033[48;2;" << (int)r << ";" << (int)g << ";" << (int)b << "m  \033[0m";
-                } else {
-                    std::cout << "  ";
-                }
-            }
+        // Reserve space for matrix (8 lines)
+        for (int i = 0; i < HEIGHT; i++) {
             std::cout << "\n";
         }
-        std::cout << "\n";
+        std::cout << "\n=== Console Output ===\n";
         std::cout.flush();
         firstShow = false;
-        return;
     }
 
-    // Move cursor up to redraw in place
-    std::cout << "\033[9A";  // Move up 9 lines (8 for matrix + 1 for spacing)
+    // Save cursor position
+    std::cout << "\033[s";
+
+    // Move to matrix area (line 3, after header)
+    std::cout << "\033[3;1H";
 
     // Render each row
     for (int y = 0; y < HEIGHT; y++) {
@@ -51,11 +45,13 @@ void Adafruit_NeoPixel::show() {
             if (r > 0 || g > 0 || b > 0) {
                 std::cout << "\033[48;2;" << (int)r << ";" << (int)g << ";" << (int)b << "m  \033[0m";
             } else {
-                std::cout << "  "; // Dark pixel
+                std::cout << "\033[48;2;20;20;20m  \033[0m"; // Dark gray for off pixels
             }
         }
         std::cout << "\n";
     }
-    std::cout << "\n";
+
+    // Restore cursor position
+    std::cout << "\033[u";
     std::cout.flush();
 }
