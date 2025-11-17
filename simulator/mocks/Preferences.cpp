@@ -63,7 +63,9 @@ std::string Preferences::getFilename() {
 bool Preferences::begin(const char* name, bool readOnly) {
     currentNamespace = name;
 
-    if (storage.empty() && !getFilename().empty()) {
+    // Always reload from file to pick up changes from other instances
+    if (!getFilename().empty()) {
+        storage.clear();  // Clear old data
         loadFromFile();
     }
 
