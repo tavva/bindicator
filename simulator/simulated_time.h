@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include <chrono>
 
 class SimulatedTime {
 public:
@@ -14,4 +15,5 @@ private:
     static uint32_t baseTime;
     static float timeMultiplier;
     static std::mutex timeMutex;
+    static std::chrono::steady_clock::time_point startTime;
 };

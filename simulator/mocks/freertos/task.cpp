@@ -55,8 +55,8 @@ BaseType_t xTaskCreatePinnedToCore(
 }
 
 void vTaskDelay(TickType_t ticks) {
-    SimulatedTime::advance(ticks);
-    usleep(10000);  // Small real delay to allow other threads to run
+    // Actually sleep for the specified time (ticks are milliseconds)
+    usleep(ticks * 1000);
 }
 
 void vTaskDelayUntil(TickType_t* previousWakeTime, TickType_t timeIncrement) {
