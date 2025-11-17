@@ -7,9 +7,18 @@
 
 WINDOW* NcursesDisplay::matrixWin = nullptr;
 WINDOW* NcursesDisplay::consoleWin = nullptr;
+WINDOW* NcursesDisplay::inputWin = nullptr;
 std::mutex NcursesDisplay::displayMutex;
 bool NcursesDisplay::initialized = false;
 int NcursesDisplay::consoleScrollPos = 0;
+
+// Input handling
+std::string NcursesDisplay::inputBuffer;
+std::queue<std::string> NcursesDisplay::commandQueue;
+std::mutex NcursesDisplay::inputMutex;
+bool NcursesDisplay::buttonPressed = false;
+unsigned long NcursesDisplay::buttonPressStartTime = 0;
+unsigned long NcursesDisplay::buttonPressDuration = 0;
 
 void NcursesDisplay::init() {
     std::lock_guard<std::mutex> lock(displayMutex);
@@ -40,8 +49,15 @@ void NcursesDisplay::init() {
     getmaxyx(stdscr, rows, cols);
 
     int matrixWidth = 22;  // 8*2 pixels + borders
-    matrixWin = newwin(rows, matrixWidth, 0, 0);
-    consoleWin = newwin(rows, cols - matrixWidth, 0, matrixWidth);
+    int inputHeight = 3;   // Input line with borders
+
+    matrixWin = newwin(rows - inputHeight, matrixWidth, 0, 0);
+    consoleWin = newwin(rows - inputHeight, cols - matrixWidth, 0, matrixWidth);
+    inputWin = newwin(inputHeight, cols, rows - inputHeight, 0);
+
+    // Enable keyboard input (non-blocking)
+    nodelay(stdscr, TRUE);
+    keypad(stdscr, TRUE);
 
     // Draw borders
     box(matrixWin, 0, 0);
@@ -50,8 +66,12 @@ void NcursesDisplay::init() {
     box(consoleWin, 0, 0);
     mvwprintw(consoleWin, 0, 2, " Console Output ");
 
+    box(inputWin, 0, 0);
+    mvwprintw(inputWin, 0, 2, " Input: [b]=short press [l]=long press [ENTER]=command [q]=quit ");
+
     wrefresh(matrixWin);
     wrefresh(consoleWin);
+    wrefresh(inputWin);
 
     initialized = true;
 }
@@ -63,6 +83,7 @@ void NcursesDisplay::cleanup() {
 
     if (matrixWin) delwin(matrixWin);
     if (consoleWin) delwin(consoleWin);
+    if (inputWin) delwin(inputWin);
 
     endwin();
     initialized = false;
@@ -87,26 +108,33 @@ void NcursesDisplay::renderMatrix(const uint32_t* pixels, int numPixels) {
 
             // Map to nearest basic color
             int colorPair = 1; // Default black
-            int brightness = r + g + b;
 
-            if (brightness > 30) {  // Not completely dark
-                // Determine dominant color
-                if (r > g && r > b && r > 80) {
-                    colorPair = 2; // Red
-                } else if (g > r && g > b && g > 80) {
-                    colorPair = 3; // Green
-                } else if (b > r && b > g && b > 80) {
-                    colorPair = 4; // Blue
-                } else if (r > 80 && g > 80 && b < 80) {
-                    colorPair = 5; // Yellow
-                } else if (r < 80 && g > 80 && b > 80) {
-                    colorPair = 6; // Cyan
-                } else if (r > 80 && g < 80 && b > 80) {
-                    colorPair = 7; // Magenta
-                } else if (brightness > 150) {
-                    colorPair = 8; // White/Gray
+            if (color != 0) {  // Any non-zero color
+                // Determine which color channel is strongest
+                int maxChannel = (r > g) ? ((r > b) ? r : b) : ((g > b) ? g : b);
+
+                if (maxChannel < 30) {
+                    colorPair = 1; // Very dark, show as black
+                } else if (r == g && g == b) {
+                    // Grayscale - show as white
+                    colorPair = 8;
+                } else if (r > 10 && g > 10 && b < 10) {
+                    // Yellow (r≈g, low blue) - catches (50,50,0) and similar
+                    colorPair = 5;
+                } else if (r < 10 && g > 10 && b > 10) {
+                    // Cyan (g≈b, low red)
+                    colorPair = 6;
+                } else if (r > 10 && g < 10 && b > 10) {
+                    // Magenta (r≈b, low green)
+                    colorPair = 7;
+                } else if (r > g && r > b) {
+                    colorPair = 2; // Red dominant
+                } else if (g > r && g > b) {
+                    colorPair = 3; // Green dominant
+                } else if (b > r && b > g) {
+                    colorPair = 4; // Blue dominant
                 } else {
-                    colorPair = 1; // Dark gray
+                    colorPair = 8; // Default to white for unclear cases
                 }
             }
 
@@ -165,4 +193,90 @@ void NcursesDisplay::refresh() {
 
     if (matrixWin) wrefresh(matrixWin);
     if (consoleWin) wrefresh(consoleWin);
+    if (inputWin) wrefresh(inputWin);
+}
+
+void NcursesDisplay::handleInput() {
+    if (!initialized) return;
+
+    int ch = getch();
+    if (ch == ERR) return;  // No input available
+
+    std::lock_guard<std::mutex> lock(inputMutex);
+
+    if (ch == 'q' || ch == 'Q') {
+        // Quit signal (handled by main)
+        exit(0);
+    } else if (ch == 'b' && inputBuffer.empty()) {
+        // Short button press simulation (100ms) - only when not typing
+        if (!buttonPressed) {
+            buttonPressed = true;
+            buttonPressStartTime = 0;  // Will be set on first digitalRead
+            buttonPressDuration = 100;  // Hold for 100ms
+            printConsole("[SIM] Button short press\n");
+        }
+    } else if ((ch == 'l' || ch == 'L') && inputBuffer.empty()) {
+        // Long button press simulation (3.5s for long press detection) - only when not typing
+        if (!buttonPressed) {
+            buttonPressed = true;
+            buttonPressStartTime = 0;  // Will be set on first digitalRead
+            buttonPressDuration = 3500;  // Hold for 3.5s
+            printConsole("[SIM] Button long press\n");
+        }
+    } else if (ch == '\n' || ch == KEY_ENTER || ch == 10 || ch == 13) {
+        // Submit command
+        if (!inputBuffer.empty()) {
+            commandQueue.push(inputBuffer);
+            printConsole(("> " + inputBuffer + "\n").c_str());
+            inputBuffer.clear();
+        }
+    } else if (ch == KEY_BACKSPACE || ch == 127 || ch == '\b') {
+        // Backspace
+        if (!inputBuffer.empty()) {
+            inputBuffer.pop_back();
+        }
+    } else if (ch >= 32 && ch < 127) {
+        // Printable character
+        inputBuffer += static_cast<char>(ch);
+    }
+
+    // Update input display
+    std::lock_guard<std::mutex> displayLock(displayMutex);
+    if (inputWin) {
+        wmove(inputWin, 1, 1);
+        wclrtoeol(inputWin);
+        mvwprintw(inputWin, 1, 1, "> %s", inputBuffer.c_str());
+        box(inputWin, 0, 0);
+        mvwprintw(inputWin, 0, 2, " Input: [b]=short press [l]=long press [ENTER]=command [q]=quit ");
+        wrefresh(inputWin);
+    }
+}
+
+bool NcursesDisplay::hasSerialCommand() {
+    std::lock_guard<std::mutex> lock(inputMutex);
+    return !commandQueue.empty();
+}
+
+std::string NcursesDisplay::getSerialCommand() {
+    std::lock_guard<std::mutex> lock(inputMutex);
+    if (commandQueue.empty()) return "";
+
+    std::string cmd = commandQueue.front();
+    commandQueue.pop();
+    return cmd;
+}
+
+bool NcursesDisplay::isButtonPressed() {
+    std::lock_guard<std::mutex> lock(inputMutex);
+    return buttonPressed;
+}
+
+void NcursesDisplay::releaseButton() {
+    std::lock_guard<std::mutex> lock(inputMutex);
+    buttonPressed = false;
+}
+
+unsigned long NcursesDisplay::getButtonPressDuration() {
+    std::lock_guard<std::mutex> lock(inputMutex);
+    return buttonPressDuration;
 }

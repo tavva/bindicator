@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <time.h>
+#include <unistd.h>
 #include "../simulated_time.h"
 
 // Include FreeRTOS and ESP for ESP32 compatibility
@@ -77,7 +78,8 @@ inline unsigned long millis() {
 }
 
 inline void delay(unsigned long ms) {
-    SimulatedTime::advance(ms);
+    // Actually sleep to let real time pass
+    usleep(ms * 1000);
 }
 
 // ESP32 time functions
@@ -92,9 +94,9 @@ inline void configTime(long gmtOffset_sec, int daylightOffset_sec, const char* s
     // In simulator, we just use system time
 }
 
-// Pin functions (no-op for simulator)
+// Pin functions
 inline void pinMode(uint8_t pin, uint8_t mode) {}
-inline int digitalRead(uint8_t pin) { return LOW; }
+int digitalRead(uint8_t pin);  // Simulates button press
 inline void digitalWrite(uint8_t pin, uint8_t val) {}
 
 // Forward declare IPAddress for Serial
@@ -117,8 +119,8 @@ public:
     void print(double value);
     void printf(const char* format, ...);
 
-    bool available() { return false; }
-    String readStringUntil(char terminator) { return ""; }
+    bool available();
+    String readStringUntil(char terminator);
 };
 
 extern SerialClass Serial;

@@ -47,10 +47,11 @@ int main(int argc, char** argv) {
     pthread_t loop_thread;
     pthread_create(&loop_thread, nullptr, loopThread, nullptr);
 
-    // Main thread just keeps display refreshing
+    // Main thread handles input and refreshes display
     while (running) {
+        NcursesDisplay::handleInput();
         NcursesDisplay::refresh();
-        usleep(100000);  // 100ms
+        usleep(10000);  // 10ms for responsive input
     }
 
     // Wait for loop thread to finish

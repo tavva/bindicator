@@ -78,3 +78,46 @@ void SerialClass::printf(const char* format, ...) {
     va_end(args);
     NcursesDisplay::printConsole(buffer);
 }
+
+bool SerialClass::available() {
+    return NcursesDisplay::hasSerialCommand();
+}
+
+String SerialClass::readStringUntil(char terminator) {
+    return String(NcursesDisplay::getSerialCommand());
+}
+
+int digitalRead(uint8_t pin) {
+    // Simulate button press (active LOW with INPUT_PULLUP)
+    static unsigned long pressStartTime = 0;
+    static bool wasPressed = false;
+
+    bool currentlyPressed = NcursesDisplay::isButtonPressed();
+
+    // Detect button press start
+    if (currentlyPressed && !wasPressed) {
+        pressStartTime = millis();
+        wasPressed = true;
+    }
+
+    // Check for auto-release after duration
+    if (currentlyPressed && wasPressed) {
+        unsigned long elapsed = millis() - pressStartTime;
+        unsigned long duration = NcursesDisplay::getButtonPressDuration();
+
+        // Auto-release after the specified duration
+        if (elapsed >= duration) {
+            NcursesDisplay::releaseButton();
+            wasPressed = false;
+            return HIGH;
+        }
+        return LOW;
+    }
+
+    // Button not pressed or was released
+    if (!currentlyPressed) {
+        wasPressed = false;
+    }
+
+    return HIGH;
+}
