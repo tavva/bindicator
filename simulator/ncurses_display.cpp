@@ -3,6 +3,7 @@
 
 #include "ncurses_display.h"
 #include <cstring>
+#include <string.h>
 
 WINDOW* NcursesDisplay::matrixWin = nullptr;
 WINDOW* NcursesDisplay::consoleWin = nullptr;
@@ -18,41 +19,29 @@ void NcursesDisplay::init() {
     // Initialize ncurses
     initscr();
     start_color();
+    use_default_colors();
     cbreak();
     noecho();
     curs_set(0);  // Hide cursor
 
-    // Initialize color pairs for RGB rendering
-    // We'll use color pairs 1-216 for a 6x6x6 RGB cube
-    int pairNum = 1;
-    for (int r = 0; r < 6; r++) {
-        for (int g = 0; g < 6; g++) {
-            for (int b = 0; b < 6; b++) {
-                int colorR = 1000 * r / 5;
-                int colorG = 1000 * g / 5;
-                int colorB = 1000 * b / 5;
-
-                init_color(pairNum, colorR, colorG, colorB);
-                init_pair(pairNum, pairNum, pairNum);
-                pairNum++;
-                if (pairNum > 216) goto done_colors;
-            }
-        }
-    }
-    done_colors:
+    // Initialize basic color pairs (using standard 8 colors)
+    // Black background with colored foreground for "pixels"
+    init_pair(1, COLOR_BLACK, COLOR_BLACK);    // Off/dark
+    init_pair(2, COLOR_RED, COLOR_RED);        // Red
+    init_pair(3, COLOR_GREEN, COLOR_GREEN);    // Green
+    init_pair(4, COLOR_BLUE, COLOR_BLUE);      // Blue
+    init_pair(5, COLOR_YELLOW, COLOR_YELLOW);  // Yellow
+    init_pair(6, COLOR_CYAN, COLOR_CYAN);      // Cyan
+    init_pair(7, COLOR_MAGENTA, COLOR_MAGENTA);// Magenta
+    init_pair(8, COLOR_WHITE, COLOR_WHITE);    // White/Gray
 
     // Create windows
-    // Matrix window: 20 cols (for 8*2 + border), full height, on left
-    // Console window: remaining width, full height, on right
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
-    int matrixWidth = 22;  // 8*2 pixels + 2 for border + 2 padding
+    int matrixWidth = 22;  // 8*2 pixels + borders
     matrixWin = newwin(rows, matrixWidth, 0, 0);
     consoleWin = newwin(rows, cols - matrixWidth, 0, matrixWidth);
-
-    // Enable scrolling for console window
-    scrollok(consoleWin, TRUE);
 
     // Draw borders
     box(matrixWin, 0, 0);
@@ -84,14 +73,9 @@ void NcursesDisplay::renderMatrix(const uint32_t* pixels, int numPixels) {
 
     std::lock_guard<std::mutex> lock(displayMutex);
 
-    // Clear matrix area (inside border)
-    for (int y = 1; y <= 8; y++) {
-        mvwprintw(matrixWin, y, 1, "                  ");
-    }
-
-    // Render 8x8 matrix starting at row 1, col 1 (inside border)
+    // Render 8x8 matrix starting at row 2, col 3 (inside border, centered)
     for (int y = 0; y < 8; y++) {
-        wmove(matrixWin, y + 2, 3);  // Start at row 2, col 3 (centered)
+        wmove(matrixWin, y + 2, 3);
 
         for (int x = 0; x < 8; x++) {
             uint32_t color = pixels[y * 8 + x];
@@ -101,16 +85,32 @@ void NcursesDisplay::renderMatrix(const uint32_t* pixels, int numPixels) {
             uint8_t g = (color >> 8) & 0xFF;
             uint8_t b = color & 0xFF;
 
-            // Map to 6x6x6 color cube (216 colors)
-            int r6 = (r * 5) / 255;
-            int g6 = (g * 5) / 255;
-            int b6 = (b * 5) / 255;
-            int colorPair = 1 + r6 * 36 + g6 * 6 + b6;
+            // Map to nearest basic color
+            int colorPair = 1; // Default black
+            int brightness = r + g + b;
 
-            if (colorPair > 216) colorPair = 216;
-            if (colorPair < 1) colorPair = 1;
+            if (brightness > 30) {  // Not completely dark
+                // Determine dominant color
+                if (r > g && r > b && r > 80) {
+                    colorPair = 2; // Red
+                } else if (g > r && g > b && g > 80) {
+                    colorPair = 3; // Green
+                } else if (b > r && b > g && b > 80) {
+                    colorPair = 4; // Blue
+                } else if (r > 80 && g > 80 && b < 80) {
+                    colorPair = 5; // Yellow
+                } else if (r < 80 && g > 80 && b > 80) {
+                    colorPair = 6; // Cyan
+                } else if (r > 80 && g < 80 && b > 80) {
+                    colorPair = 7; // Magenta
+                } else if (brightness > 150) {
+                    colorPair = 8; // White/Gray
+                } else {
+                    colorPair = 1; // Dark gray
+                }
+            }
 
-            // Draw pixel as two characters (roughly square)
+            // Draw pixel as two characters
             wattron(matrixWin, COLOR_PAIR(colorPair));
             waddstr(matrixWin, "  ");
             wattroff(matrixWin, COLOR_PAIR(colorPair));
@@ -125,19 +125,37 @@ void NcursesDisplay::printConsole(const char* text) {
 
     std::lock_guard<std::mutex> lock(displayMutex);
 
+    static int lineCount = 0;
     int rows, cols;
     getmaxyx(consoleWin, rows, cols);
 
-    // Print inside the border (row 1 to rows-2, col 1 to cols-2)
-    wmove(consoleWin, rows - 2, 1);
-    wprintw(consoleWin, "%s", text);
-    wscrl(consoleWin, 1);  // Scroll up one line
+    // Calculate position inside border
+    int maxLines = rows - 2;  // Account for top and bottom border
+    int currentLine = (lineCount % maxLines) + 1;  // +1 for top border
 
-    // Redraw border since scroll might affect it
+    // Clear the line and print text
+    wmove(consoleWin, currentLine, 1);
+    wclrtoeol(consoleWin);
+
+    // Truncate text to fit within window (account for borders)
+    int maxWidth = cols - 3;  // -2 for borders, -1 for safety
+    char buffer[1024];
+    strncpy(buffer, text, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    if (strlen(buffer) > maxWidth) {
+        buffer[maxWidth] = '\0';
+    }
+
+    mvwprintw(consoleWin, currentLine, 1, "%s", buffer);
+
+    // Redraw border
     box(consoleWin, 0, 0);
     mvwprintw(consoleWin, 0, 2, " Console Output ");
 
     wrefresh(consoleWin);
+
+    lineCount++;
 }
 
 void NcursesDisplay::refresh() {
