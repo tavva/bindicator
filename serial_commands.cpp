@@ -22,6 +22,11 @@ void SerialCommands::handle() {
         } else if (command == "setup") {
             enterSetupMode();
         }
+        #ifdef SIMULATOR
+        else if (command == "mock_setup") {
+            mockSetup();
+        }
+        #endif
     }
 }
 
@@ -56,6 +61,9 @@ void SerialCommands::showHelp() {
     Serial.println("clear_oauth - Clear only OAuth preferences and restart");
     Serial.println("prefs       - Show all stored preferences");
     Serial.println("setup       - Enter setup mode");
+    #ifdef SIMULATOR
+    Serial.println("mock_setup  - Simulate completed setup (simulator only)");
+    #endif
     Serial.println("help        - Show this help message");
 }
 
@@ -96,3 +104,36 @@ void SerialCommands::enterSetupMode() {
 
     ESP.restart();
 }
+
+#ifdef SIMULATOR
+void SerialCommands::mockSetup() {
+    Serial.println("\n=== Simulating Setup Completion ===");
+
+    // Set WiFi credentials (from secrets.h)
+    Serial.println("Setting WiFi credentials...");
+    ConfigManager::setWifiCredentials("simulator-wifi", "simulator-pass");
+
+    // Set a fake OAuth refresh token
+    Serial.println("Setting OAuth refresh token...");
+    Preferences oauthPrefs;
+    oauthPrefs.begin("oauth", false);
+    oauthPrefs.putString("refresh_token", "mock_refresh_token_12345");
+    oauthPrefs.end();
+
+    // Set a calendar ID
+    Serial.println("Setting calendar ID...");
+    ConfigManager::setCalendarId("primary");
+
+    // Clear forced setup flag
+    Serial.println("Clearing forced setup flag...");
+    Preferences systemPrefs;
+    systemPrefs.begin("system", false);
+    systemPrefs.remove("force_setup");
+    systemPrefs.end();
+
+    Serial.println("\n=== Setup simulation complete! ===");
+    Serial.println("Restarting to enter normal mode...\n");
+
+    ESP.restart();
+}
+#endif

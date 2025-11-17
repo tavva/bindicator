@@ -16,6 +16,9 @@ class SerialCommands {
         static void showPreferences();
         static void printNamespace(const char* name);
         static void enterSetupMode();
+        #ifdef SIMULATOR
+        static void mockSetup();
+        #endif
 };
 
 #endif
