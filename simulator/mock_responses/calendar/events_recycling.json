@@ -1,0 +1,16 @@
+{
+  "kind": "calendar#events",
+  "items": [
+    {
+      "kind": "calendar#event",
+      "id": "mock_event_1",
+      "summary": "Recycling",
+      "start": {
+        "date": "2025-11-17"
+      },
+      "end": {
+        "date": "2025-11-18"
+      }
+    }
+  ]
+}

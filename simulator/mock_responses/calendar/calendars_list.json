@@ -1,8 +1,10 @@
 {
+  "kind": "calendar#calendarList",
   "items": [
     {
       "id": "primary",
-      "summary": "Test Calendar"
+      "summary": "Mock Calendar",
+      "primary": true
     }
   ]
 }
