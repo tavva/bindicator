@@ -66,12 +66,12 @@ bool HTTPClient::loadMockResponse() {
     std::string mockFile;
 
     if (currentUrl.find("oauth2.googleapis.com/token") != std::string::npos) {
-        mockFile = "simulator/mock_responses/oauth/token_success.json";
+        mockFile = "mock_responses/oauth/token_success.json";
     } else if (currentUrl.find("calendar/v3/calendars") != std::string::npos) {
         if (currentUrl.find("/events") != std::string::npos) {
-            mockFile = "simulator/mock_responses/calendar/events_none.json";
+            mockFile = "mock_responses/calendar/events_none.json";
         } else {
-            mockFile = "simulator/mock_responses/calendar/calendars_list.json";
+            mockFile = "mock_responses/calendar/calendars_list.json";
         }
     } else {
         Serial.print("No mock response for URL: ");
