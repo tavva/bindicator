@@ -4,7 +4,7 @@
     {
       "kind": "calendar#event",
       "id": "mock_event_2",
-      "summary": "Rubbish",
+      "summary": "Bins out (rubbish)",
       "start": {
         "date": "2025-11-21"
       },
