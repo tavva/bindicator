@@ -1,4 +1,7 @@
 #include "serial_commands.h"
+#ifdef SIMULATOR
+#include <fstream>
+#endif
 
 void SerialCommands::begin() {
     Serial.println("\nType 'help' for available commands");
@@ -25,6 +28,9 @@ void SerialCommands::handle() {
         #ifdef SIMULATOR
         else if (command == "mock_setup") {
             mockSetup();
+        } else if (command.find("mock_bin ") == 0) {
+            String binType = command.substr(9);
+            mockBinState(binType);
         }
         #endif
     }
@@ -63,6 +69,7 @@ void SerialCommands::showHelp() {
     Serial.println("setup       - Enter setup mode");
     #ifdef SIMULATOR
     Serial.println("mock_setup  - Simulate completed setup (simulator only)");
+    Serial.println("mock_bin <type> - Set bin state: none|recycling|rubbish (simulator only)");
     #endif
     Serial.println("help        - Show this help message");
 }
@@ -135,5 +142,46 @@ void SerialCommands::mockSetup() {
     Serial.println("Restarting to enter normal mode...\n");
 
     ESP.restart();
+}
+
+void SerialCommands::mockBinState(const String& binType) {
+    Serial.print("\n=== Setting mock bin state: ");
+    Serial.print(binType);
+    Serial.println(" ===");
+
+    // Determine which mock file to use
+    std::string mockFile;
+    if (binType == "none") {
+        mockFile = "mock_responses/calendar/events_none.json";
+    } else if (binType == "recycling") {
+        mockFile = "mock_responses/calendar/events_recycling.json";
+    } else if (binType == "rubbish") {
+        mockFile = "mock_responses/calendar/events_rubbish.json";
+    } else {
+        Serial.println("Invalid bin type! Use: none, recycling, or rubbish");
+        return;
+    }
+
+    // Copy the selected mock file to be the active one
+    std::ifstream src(mockFile, std::ios::binary);
+    if (!src.is_open()) {
+        Serial.print("Error: Could not open ");
+        Serial.println(mockFile.c_str());
+        return;
+    }
+
+    std::ofstream dst("mock_responses/calendar/events_none.json", std::ios::binary);
+    if (!dst.is_open()) {
+        Serial.println("Error: Could not write to events_none.json");
+        src.close();
+        return;
+    }
+
+    dst << src.rdbuf();
+    src.close();
+    dst.close();
+
+    Serial.println("Mock file updated successfully!");
+    Serial.println("Calendar will use this state on next check.");
 }
 #endif

@@ -18,6 +18,7 @@ class SerialCommands {
         static void enterSetupMode();
         #ifdef SIMULATOR
         static void mockSetup();
+        static void mockBinState(const String& binType);
         #endif
 };
 
