@@ -19,6 +19,7 @@ class SerialCommands {
         #ifdef SIMULATOR
         static void mockSetup();
         static void mockBinState(const String& binType);
+        static void forceCalendarCheck();
         #endif
 };
 

@@ -1,6 +1,8 @@
 #include "serial_commands.h"
 #ifdef SIMULATOR
 #include <fstream>
+#include "bindicator.h"
+#include "calendar_handler.h"
 #endif
 
 void SerialCommands::begin() {
@@ -31,6 +33,8 @@ void SerialCommands::handle() {
         } else if (command.find("mock_bin ") == 0) {
             String binType = command.substr(9);
             mockBinState(binType);
+        } else if (command == "check") {
+            forceCalendarCheck();
         }
         #endif
     }
@@ -70,6 +74,7 @@ void SerialCommands::showHelp() {
     #ifdef SIMULATOR
     Serial.println("mock_setup  - Simulate completed setup (simulator only)");
     Serial.println("mock_bin <type> - Set bin state: none|recycling|rubbish (simulator only)");
+    Serial.println("check       - Force calendar check now (simulator only)");
     #endif
     Serial.println("help        - Show this help message");
 }
@@ -183,5 +188,41 @@ void SerialCommands::mockBinState(const String& binType) {
 
     Serial.println("Mock file updated successfully!");
     Serial.println("Calendar will use this state on next check.");
+    Serial.println("Type 'check' to force calendar check immediately.");
+}
+
+void SerialCommands::forceCalendarCheck() {
+    Serial.println("\n=== Forcing calendar check ===");
+
+    // Check if we should perform the calendar check
+    if (!Bindicator::shouldCheckCalendar()) {
+        Serial.println("Calendar check skipped (conditions not met)");
+        return;
+    }
+
+    Serial.println("Triggering calendar check...");
+
+    // The calendar task will pick this up
+    extern CalendarHandler calendar;
+    bool hasRecycling = false;
+    bool hasRubbish = false;
+
+    if (calendar.checkForBinEvents(hasRecycling, hasRubbish)) {
+        CollectionState state = CollectionState::NO_COLLECTION;
+
+        if (hasRecycling && hasRubbish) {
+            Serial.println("Both recycling and rubbish found - using recycling");
+            state = CollectionState::RECYCLING_DUE;
+        } else if (hasRecycling) {
+            state = CollectionState::RECYCLING_DUE;
+        } else if (hasRubbish) {
+            state = CollectionState::RUBBISH_DUE;
+        }
+
+        Bindicator::updateFromCalendar(state);
+        Serial.println("Calendar check complete!");
+    } else {
+        Serial.println("Calendar check failed");
+    }
 }
 #endif
