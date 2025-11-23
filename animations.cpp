@@ -51,6 +51,11 @@ const Color Animations::LOADING_WHITE(50, 50, 50);
 
 Color Animations::prepareColor = LOADING_WHITE;
 
+static uint8_t getRotatedBitmapValue(const uint8_t bitmap[8][8], int row, int col) {
+    // Rotate the bitmap 180 degrees so icons render upright on the physical matrix
+    return bitmap[7 - row][7 - col];
+}
+
 uint8_t Animations::calculateBrightness() {
     unsigned long currentTime = millis();
     if (lastPulseTime == 0) {
@@ -88,7 +93,7 @@ void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
 
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            if (exclamation[row][col] == 1) {  // stroke
+            if (getRotatedBitmapValue(exclamation, row, col) == 1) {  // stroke
                 display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (stroke.r * brightness) / 64,
@@ -96,7 +101,7 @@ void Animations::drawError(DisplayHandler& display, Color stroke, Color dot) {
                         (stroke.b * brightness) / 64
                     )
                 );
-            } else if (exclamation[row][col] == 2) {  // dot
+            } else if (getRotatedBitmapValue(exclamation, row, col) == 2) {  // dot
                 display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (dot.r * brightness) / 64,
@@ -189,7 +194,7 @@ void Animations::drawBinImage(DisplayHandler& display, Color color) {
 
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            if (binImage[row][col] == 1) {
+            if (getRotatedBitmapValue(binImage, row, col) == 1) {
                 display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (color.r * brightness) / 64,
@@ -207,7 +212,7 @@ void Animations::drawComplete(DisplayHandler& display, Color color) {
 
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            if (completeImage[row][col] == 1) {
+            if (getRotatedBitmapValue(completeImage, row, col) == 1) {
                 display.setPixelColor(row * 8 + col,
                     display.matrix.Color(
                         (color.r * brightness) / 64,
