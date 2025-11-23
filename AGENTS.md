@@ -24,6 +24,9 @@ make nocache        # Clean build and upload
 make just-upload    # Upload existing build without recompiling
 make monitor        # Open serial monitor (auto-reconnects)
 make update         # Update Arduino platform packages
+make simulator      # Build native desktop simulator (ncurses UI)
+make sim-run        # Build + run simulator
+make sim-clean      # Clean simulator build artifacts
 ```
 
 ### Testing (Native C++)
@@ -40,6 +43,15 @@ Tests require GoogleTest installed via Homebrew: `brew install googletest`
 
 The `cloud-run/` directory contains a Google Cloud Function (Node.js) used as the OAuth redirect handler for the device setup process.
 
+### Desktop Simulator (Native)
+
+- Lives in `simulator/` and runs the real firmware with mocked ESP32/Arduino APIs in a ncurses UI
+- Build/run via `make simulator` or `make sim-run` (requires g++, pthreads, ncurses, curl)
+- Serial console is integrated: type commands then Enter; `b` = short press, `l` = long press, `q` = quit
+- Preferences persist to `simulator/simulator-state.json` (`SIMULATOR_EPHEMERAL=1` keeps them in-memory)
+- Mock Google responses are in `simulator/mock_responses/`; set `SIMULATOR_MOCK=0` when real HTTP support lands
+- Simulator-only serial helpers: `mock_setup`, `mock_bin none|recycling|rubbish`, `check`
+
 ## Architecture Overview
 
 ### Core State Machine (bindicator.cpp/h)
@@ -48,6 +60,8 @@ The `Bindicator` class manages the device's primary state machine with these sta
 - `NO_COLLECTION`: No bins due
 - `RECYCLING_DUE`: Recycling bin needs to go out
 - `RUBBISH_DUE`: Rubbish bin needs to go out
+- `COMPLETED`: Bin marked as taken out (resets after 3am)
+- `LOADING`: Initial/transition state
 - Error states (WiFi, API, other)
 - Setup mode
 
@@ -87,8 +101,8 @@ Transitions into setup mode when:
 ### Calendar Event Detection
 
 The system scans Google Calendar for events with titles containing:
-- "Recycling" → Sets `RECYCLING_DUE`
-- "Rubbish" → Sets `RUBBISH_DUE`
+- "(recycling)" → Sets `RECYCLING_DUE`
+- "(rubbish)" → Sets `RUBBISH_DUE`
 
 Events are checked for "today" to determine if bins need to go out.
 
@@ -104,7 +118,9 @@ Device state persists across reboots via ESP32 Preferences:
 
 ### Serial Commands
 
-The device accepts serial commands for debugging/control (see `serial_commands.cpp`). Commands trigger setup mode, factory reset, or status queries.
+The device accepts serial commands for debugging/control (see `serial_commands.cpp`):
+- `clear`, `clear_oauth`, `prefs`, `setup`, `undo_bin`, `help`
+- Simulator-only: `mock_setup`, `mock_bin none|recycling|rubbish`, `check`
 
 ## Testing Strategy
 
@@ -123,6 +139,7 @@ Tests compile production C++ code with `-DTESTING` flag and mock out hardware de
 - `secrets.h`: OAuth credentials and WiFi defaults (not committed)
 - `tasks.cpp/h`: FreeRTOS task definitions and command queue
 - `config_manager.cpp/h`: Persistent storage abstraction
+- `simulator/`: Desktop simulator, ESP32/Arduino mocks, and mock HTTP responses
 
 ## Code Structure Notes
 
