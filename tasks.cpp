@@ -37,6 +37,7 @@ void animationTask(void* parameter) {
         if (xQueueReceive(commandQueue, &cmd, 0) == pdTRUE) {
             Serial.printf("Animation received command: %d\n", cmd);
             isLoading = false;
+            isSetupMode = false;
             isError = false;
             isBin = false;
             isComplete = false;
