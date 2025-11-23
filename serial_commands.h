@@ -16,6 +16,7 @@ class SerialCommands {
         static void showPreferences();
         static void printNamespace(const char* name);
         static void enterSetupMode();
+        static void markBinNotTakenOut();
         #ifdef SIMULATOR
         static void mockSetup();
         static void mockBinState(const String& binType);

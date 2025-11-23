@@ -24,10 +24,12 @@ class Bindicator {
         static void exitSetupMode();
         static bool isInSetupMode();
         static void clearErrorState();
+        static void markBinNotTakenOut();
 
     private:
         static BindicatorState state;
         static time_t completedTime;
+        static CollectionState lastCollectionState;
         static const int RESET_HOUR = 3;
         static const unsigned long ERROR_RETRY_INTERVAL_MS = 300000;
         static unsigned long lastErrorTime;

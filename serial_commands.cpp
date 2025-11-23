@@ -1,7 +1,7 @@
 #include "serial_commands.h"
+#include "bindicator.h"
 #ifdef SIMULATOR
 #include <fstream>
-#include "bindicator.h"
 #include "calendar_handler.h"
 #endif
 
@@ -26,6 +26,8 @@ void SerialCommands::handle() {
             showPreferences();
         } else if (command == "setup") {
             enterSetupMode();
+        } else if (command == "undo_bin") {
+            markBinNotTakenOut();
         }
         #ifdef SIMULATOR
         else if (command == "mock_setup") {
@@ -71,6 +73,7 @@ void SerialCommands::showHelp() {
     Serial.println("clear_oauth - Clear only OAuth preferences and restart");
     Serial.println("prefs       - Show all stored preferences");
     Serial.println("setup       - Enter setup mode");
+    Serial.println("undo_bin    - Mark bin as NOT taken out (revert completion)");
     #ifdef SIMULATOR
     Serial.println("mock_setup  - Simulate completed setup (simulator only)");
     Serial.println("mock_bin <type> - Set bin state: none|recycling|rubbish (simulator only)");
@@ -115,6 +118,11 @@ void SerialCommands::enterSetupMode() {
     ConfigManager::setForcedSetupFlag("restart-in-setup-mode");
 
     ESP.restart();
+}
+
+void SerialCommands::markBinNotTakenOut() {
+    Serial.println("Reverting bin to not taken out");
+    Bindicator::markBinNotTakenOut();
 }
 
 #ifdef SIMULATOR
@@ -219,6 +227,7 @@ void SerialCommands::forceCalendarCheck() {
             state = CollectionState::RUBBISH_DUE;
         }
 
+        Serial.printf("Calendar results - recycling: %d, rubbish: %d\n", hasRecycling, hasRubbish);
         Bindicator::updateFromCalendar(state);
         Serial.println("Calendar check complete!");
     } else {

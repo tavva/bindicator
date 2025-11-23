@@ -7,6 +7,7 @@
 BindicatorState Bindicator::state = BindicatorState::LOADING;
 time_t Bindicator::completedTime = 0;
 unsigned long Bindicator::lastErrorTime = 0;
+CollectionState Bindicator::lastCollectionState = CollectionState::NO_COLLECTION;
 
 void Bindicator::handleButtonPress() {
     if (state == BindicatorState::RECYCLING_DUE || state == BindicatorState::RUBBISH_DUE) {
@@ -37,6 +38,10 @@ bool Bindicator::shouldCheckCalendar() {
 }
 
 void Bindicator::updateFromCalendar(CollectionState collectionState) {
+    if (collectionState != CollectionState::NO_COLLECTION) {
+        lastCollectionState = collectionState;
+    }
+
     switch (collectionState) {
         case CollectionState::RECYCLING_DUE:
             transitionTo(BindicatorState::RECYCLING_DUE);
@@ -184,6 +189,10 @@ void Bindicator::initializeFromStorage() {
         Serial.println("Starting up in error state - resetting to allow immediate retry");
         lastErrorTime = 0;
         transitionTo(BindicatorState::LOADING);
+    } else if (state == BindicatorState::RECYCLING_DUE) {
+        lastCollectionState = CollectionState::RECYCLING_DUE;
+    } else if (state == BindicatorState::RUBBISH_DUE) {
+        lastCollectionState = CollectionState::RUBBISH_DUE;
     } else {
         sendStateCommand(state);
     }
@@ -199,4 +208,17 @@ void Bindicator::exitSetupMode() {
 
 bool Bindicator::isInSetupMode() {
     return state == BindicatorState::SETUP;
+}
+
+void Bindicator::markBinNotTakenOut() {
+    if (state == BindicatorState::COMPLETED &&
+        (lastCollectionState == CollectionState::RECYCLING_DUE || lastCollectionState == CollectionState::RUBBISH_DUE)) {
+        transitionTo(lastCollectionState == CollectionState::RECYCLING_DUE
+                         ? BindicatorState::RECYCLING_DUE
+                         : BindicatorState::RUBBISH_DUE);
+    } else if (state == BindicatorState::COMPLETED) {
+        transitionTo(BindicatorState::NO_COLLECTION);
+    } else {
+        Serial.println("Bin is not marked as taken out; no action taken");
+    }
 }
