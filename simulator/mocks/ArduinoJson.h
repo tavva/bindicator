@@ -3,21 +3,34 @@
 #include "Arduino.h"
 #include <map>
 #include <vector>
+#include <memory>
 
 class JsonArray;
+class DeserializationError;
 
 // Minimal ArduinoJson mock - just enough for our firmware
 class JsonVariant {
 public:
-    JsonVariant() : strValue(""), intValue(0), isArray(false) {}
+    enum class Type {
+        NONE,
+        STRING,
+        INT,
+        BOOL,
+        ARRAY,
+        OBJECT
+    };
+
+    JsonVariant() : type(Type::NONE), strValue(""), intValue(0), boolValue(false) {}
 
     // Template method for conversions
     template<typename T>
     T as() const;
 
-    void setString(const String& s) { strValue = s; }
-    void setInt(int i) { intValue = i; }
-    void setArray(JsonArray* arr) { arrayValue = arr; isArray = true; }
+    void setString(const String& s) { strValue = s; type = Type::STRING; }
+    void setInt(int i) { intValue = i; type = Type::INT; }
+    void setBool(bool b) { boolValue = b; type = Type::BOOL; }
+    void setArray(std::shared_ptr<JsonArray> arr) { arrayValue = std::move(arr); type = Type::ARRAY; }
+    void setObject(const std::map<String, JsonVariant>& obj) { objectValues = obj; type = Type::OBJECT; }
 
     // Implicit conversion operators
     operator int() const { return intValue; }
@@ -28,10 +41,12 @@ public:
     JsonVariant operator[](const char* key) const;
 
 private:
+    Type type;
     String strValue;
     int intValue;
-    bool isArray;
-    JsonArray* arrayValue = nullptr;
+    bool boolValue;
+    std::shared_ptr<JsonArray> arrayValue;
+    std::map<String, JsonVariant> objectValues;
 
     friend class JsonArray;
 };
@@ -62,7 +77,7 @@ private:
 
 class JsonDocument {
 public:
-    JsonVariant operator[](const char* key) {
+    JsonVariant& operator[](const char* key) {
         return data[key];
     }
 
@@ -73,6 +88,9 @@ public:
 
 private:
     std::map<String, JsonVariant> data;
+
+    friend DeserializationError deserializeJson(JsonDocument& doc, const String& input);
+    friend void serializeJson(const JsonDocument& doc, String& output);
 };
 
 class DynamicJsonDocument : public JsonDocument {
@@ -110,11 +128,5 @@ private:
     Code code_;
 };
 
-inline DeserializationError deserializeJson(JsonDocument& doc, const String& input) {
-    // Simple mock - doesn't actually parse JSON
-    return DeserializationError(DeserializationError::Ok);
-}
-
-inline void serializeJson(const JsonDocument& doc, String& output) {
-    output = "{}";
-}
+DeserializationError deserializeJson(JsonDocument& doc, const String& input);
+void serializeJson(const JsonDocument& doc, String& output);
