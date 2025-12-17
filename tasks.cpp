@@ -28,6 +28,7 @@ void animationTask(void* parameter) {
     static bool isError = false;
     static bool isBin = false;
     static bool isComplete = false;
+    static ErrorType currentError = ErrorType::API;
     static Color color = Animations::DEFAULT_BLUE;
 
     extern DisplayHandler display;
@@ -72,18 +73,18 @@ void animationTask(void* parameter) {
                     break;
                 case CMD_SHOW_ERROR_API:
                     Serial.println("Showing API error");
+                    currentError = ErrorType::API;
                     isError = true;
-                    Animations::drawError(display, ErrorType::API);
                     break;
                 case CMD_SHOW_ERROR_WIFI:
                     Serial.println("Showing WiFi error");
+                    currentError = ErrorType::WIFI;
                     isError = true;
-                    Animations::drawError(display, ErrorType::WIFI);
                     break;
                 case CMD_SHOW_ERROR_OTHER:
                     Serial.println("Showing other error");
+                    currentError = ErrorType::OTHER;
                     isError = true;
-                    Animations::drawError(display, ErrorType::OTHER);
                     break;
                 default:
                     Serial.printf("Unknown command: %d\n", cmd);
@@ -94,7 +95,7 @@ void animationTask(void* parameter) {
         display.matrix.clear();
 
         if (isError) {
-            Animations::drawError(display, ErrorType::API);
+            Animations::drawError(display, currentError);
         } else if (isLoading) {
             Animations::drawLoading(display);
         } else if (isSetupMode) {
